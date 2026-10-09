@@ -113,6 +113,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="card" id="coachCard"></div>
   <div class="card"><div class="cardhead"><h2>This week</h2></div><div class="week" id="weekStrip"></div><p class="small muted" id="weekNote"></p></div>
   <div class="card"><div class="cardhead"><h2>Bodyweight</h2></div><div class="row"><input id="bw" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="Today, kg" onkeydown="if(event.key==='Enter'){saveWeight();this.blur()}"><button class="primary" onclick="saveWeight()">Save</button></div></div>
+  <div class="card"><div class="cardhead"><h2>Headache</h2><button class="secondary" onclick="openHeadache()">Log one</button></div><p class="small muted" id="haSummary" style="margin:0"></p></div>
 </section>
 
 <section id="workout" class="view hidden">
@@ -138,6 +139,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="card"><div class="cardhead"><h2>Balance this week</h2></div><p class="small muted" style="margin-top:0">Hard sets per pattern. Push and pull should roughly match; hinge and squat too.</p><div id="balance" class="small"></div></div>
   <div class="card"><div class="cardhead"><h2>Personal bests</h2></div><p class="small muted" style="margin-top:0">Best estimated 1RM (Epley) and best carry or hold. The line is your best set each session.</p><div id="prs" class="small"></div></div>
   <div class="card"><div class="cardhead"><h2>Bodyweight</h2></div><div id="weights" class="small"></div></div>
+  <div class="card hidden" id="haCard"></div>
   <div class="card"><div class="cardhead"><h2>Recent sessions</h2></div><p class="small muted" style="margin-top:0">Typo? Reopen puts a session back on the Session screen to fix and finish again.</p><div id="sessLog" class="small"></div></div>
 </section>
 
@@ -189,14 +191,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <label class="tog"><input type="checkbox" id="garminOn" onchange="data.garmin=this.checked;save();if(this.checked)syncRuns(true)"> Pull my runs automatically</label>
     <div class="field" style="margin-top:8px"><label>Sync token (only if you set REBUILD_TOKEN in Netlify)</label><input id="icuToken" type="password" autocomplete="off" placeholder="optional"></div>
     <div class="links" style="margin-top:8px"><button class="primary" onclick="data.icuToken=document.getElementById('icuToken').value.trim();save();syncRuns(true)">Save &amp; sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
-  <div class="card"><div class="cardhead"><h2>Headache log</h2></div>
-    <div class="grid2"><div class="field"><label>Intensity 0–10</label><input id="haInt" type="number" min="0" max="10" inputmode="numeric"></div><div class="field"><label>Hours</label><input id="haHrs" type="text" inputmode="decimal"></div></div>
-    <div class="field" style="margin-top:8px"><label>Likely factors</label><input id="haNote" type="text" placeholder="sleep, dehydration, travel…"></div>
-    <button class="secondary" style="margin-top:8px" onclick="saveHeadache()">Log headache</button>
-    <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.2 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.2.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -378,6 +375,7 @@ function render(){applyTheme();
  document.getElementById('weekStrip').innerHTML=WEEK.map((d,i)=>`<div class="wd ${i===td?'today':''}"><span class="wl">${'MTWTFSS'[i]}</span><span class="wc ${d.cls} ${done.has(i)?'done':''}">${done.has(i)?'✓':d.k.length===1?d.k:d.k==='run'?'R':d.k==='long'?'L':'·'}</span><span class="ws">${SHORT[d.k]}</span></div>`).join('');
  document.getElementById('weekNote').textContent=p===1?'Two working sets, three reps in the tank. Five ticks is the whole job.':p===2?'Three working sets, one to two in the tank on the last. Hit the top of the range clean, then go up.':'Mass first: tempo, pauses, heavy single-leg work. Saturday builds to 120 min.';
  document.getElementById('startBtn').textContent=draftFor(k)?'Continue session':'Start session';
+ {const hw=data.headaches.filter(x=>inWeek(x.date,monday(new Date()))),last=data.headaches.at(-1);document.getElementById('haSummary').textContent=hw.length?`${hw.length} this week · last ${DAYS[dow(new Date(last.date))]} ${last.i}/10${last.h?', '+last.h+' h':''}${last.n?' · '+last.n:''}`:last?`None this week · last ${fmt(new Date(last.date))}`:'None logged. Tap Log one when you get one; it goes into the Sunday report.'}
  const cc=document.getElementById('coachCard');cc.classList.toggle('hidden',!data.coachNote);cc.innerHTML=`<h2>Coach note</h2><p style="white-space:pre-line">${esc(data.coachNote)}</p><p class="small muted">Applied ${esc(data.coachDate)}</p>`;
  // Nudges: this week's report on Sunday, last week's until Wednesday if it never went, and a stale backup.
  const due=dow(new Date())===6&&!data.reports.includes(ymd(monday(new Date()))),late=lastDue(),stale=data.sessions.length>=3&&Date.now()-data.lastBackup>14*864e5;
@@ -543,6 +541,13 @@ async function syncRuns(manual){
   if(view==='today')render();if(view==='progress')renderProgress();
  }catch(e){if(msg)msg.textContent=e.message;if(manual)toast(e.message)}
 }
+// ---- headache log: its own button on Today, form in a sheet, history on Progress ----
+function openHeadache(){sheet(`<div class="eyebrow">Headache</div><h2>Log a headache</h2>
+ <div class="grid2" style="margin-top:10px"><div class="field"><label>Intensity 0–10</label><input id="haInt" type="number" min="0" max="10" inputmode="numeric"></div><div class="field"><label>Hours</label><input id="haHrs" type="text" inputmode="decimal"></div></div>
+ <div class="field" style="margin-top:10px"><label>Likely factors</label><input id="haNote" type="text" placeholder="sleep, dehydration, travel, screens…"></div>
+ <button class="primary big" style="margin-top:12px" onclick="saveHeadache()">Log headache</button>
+ <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div>`);setTimeout(()=>document.getElementById('haInt')?.focus(),60)}
+function delHeadache(i){if(!confirm('Delete this headache entry?'))return;data.headaches.splice(i,1);save();renderProgress();render()}
 // ---- rest timer ----
 let tEnd=0,tInt=null;
 let tTotal=0;
@@ -586,6 +591,7 @@ function renderProgress(){
   return `<div class="trend"><div>${esc(n)}<br><b>${f(b)}${u}</b>${sr.length>1?` <span class="muted">· ${f(sr[0])} → ${f(sr.at(-1))} over ${sr.length} sessions</span>`:''}</div>${spark(sr,`${n}: ${f(sr[0])} to ${f(sr.at(-1))}${u}`)}</div>`}).join(''):'<span class="muted">Nothing logged yet.</span>';
  const ws=data.weights.slice(-30),wv=ws.map(x=>x.v),dl=ws.length>1?wv.at(-1)-wv[0]:0;
  document.getElementById('weights').innerHTML=ws.length?`<div class="trend"><div><b>${wv.at(-1)} kg</b>${ws.length>1?` <span class="muted">· ${dl<0?'−':'+'}${Math.abs(dl).toFixed(1)} kg since ${fmt(new Date(ws[0].date))}</span>`:''}</div>${spark(wv,`Bodyweight: ${wv[0]} to ${wv.at(-1)} kg`)}</div>`+ws.slice(-14).map(x=>`${fmt(new Date(x.date))}: <b>${x.v} kg</b>`).join('<br>'):'<span class="muted">No entries yet.</span>';
+ {const hc=document.getElementById('haCard');hc.classList.toggle('hidden',!data.headaches.length);hc.innerHTML=`<div class="cardhead"><h2>Headaches</h2><span class="small muted">${data.headaches.length} logged</span></div>`+data.headaches.map((x,i)=>[x,i]).slice(-6).reverse().map(([x,i])=>`<div class="hist"><div><b>${DAYS[dow(new Date(x.date))]} ${fmt(new Date(x.date))}</b> · ${x.i}/10${x.h?' · '+esc(x.h)+' h':''}<br><span class="muted">${esc(x.n||'—')}</span></div><button onclick="delHeadache(${i})">Delete</button></div>`).join('')}
  document.getElementById('sessLog').innerHTML=data.sessions.length?data.sessions.map((s,i)=>[s,i]).slice(-10).reverse().map(([s,i])=>{const d=new Date(s.date),ns=Object.values(s.sets||{}).reduce((a,x)=>a+x.length,0),ok=Object.keys(s.sets||{}).every(n=>LIB.some(e=>e.name===n));
   return `<div class="hist"><div><b>${DAYS[dow(d)]} ${fmt(d)}</b> · ${esc(s.name)}<br><span class="muted">${s.min?`${esc(s.min)} min${s.km?', '+esc(s.km)+' km':''}${s.up?', '+s.up+' m↑':''}${s.src==='garmin'?' · Garmin':''}`:ns+' sets'}${s.rpe?' · RPE '+esc(s.rpe):''}${s.feel?' · felt '+esc(s.feel):''}</span></div><div style="white-space:nowrap">${ok?`<button onclick="reopen(${i})">Reopen</button>`:''}<button onclick="delSession(${i})">Delete</button></div></div>`}).join(''):'<span class="muted">Nothing logged yet.</span>';
 }
@@ -685,7 +691,7 @@ function importUpdate(){
  save();msg.innerHTML=`Applied ${n} change${n===1?'':'s'}${note?' and a coach note':''}.`+(bad.length?`<div class="notice">Skipped ${bad.length}: no exercise (or pattern) matches. Ask the coach for the exact name, fix the line in the box and Apply again.<br>${bad.map(esc).join('<br>')}</div>`:'');
  document.getElementById('updateText').value=bad.join('\n')&&'REBUILD_UPDATE\n'+bad.join('\n')+'\nEND_REBUILD_UPDATE';render();
 }
-function saveHeadache(){const i=parseInt(document.getElementById('haInt').value);if(isNaN(i)){toast('Enter intensity 0–10.');return}data.headaches.push({date:new Date().toISOString(),i,h:dec(document.getElementById('haHrs').value),n:document.getElementById('haNote').value});['haInt','haHrs','haNote'].forEach(x=>document.getElementById(x).value='');save();toast('Headache logged.')}
+function saveHeadache(){const i=parseInt(document.getElementById('haInt').value);if(isNaN(i)){toast('Enter intensity 0–10.');return}data.headaches.push({date:new Date().toISOString(),i,h:dec(document.getElementById('haHrs').value),n:document.getElementById('haNote').value});['haInt','haHrs','haNote'].forEach(x=>document.getElementById(x).value='');save();closeSheet();render();if(view==='progress')renderProgress();toast('Headache logged.')}
 function setStart(v){if(v){data.start=v;save();render()}}
 function setTravel(on){data.travel=on;save();render()}
 function setRest(v){data.rest=Math.max(30,+v||90);save()}
