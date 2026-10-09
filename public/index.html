@@ -127,7 +127,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="eyebrow">Time available</div><div class="seg" id="timeSeg"></div>
     <div class="row2"><div><div class="eyebrow">Equipment</div><button class="secondary" style="width:100%" onclick="show('settings')" id="eqBtn">—</button></div><div><div class="eyebrow">Feeling</div><div class="seg" id="feelRow" style="margin-top:0"></div></div></div>
     <p class="small muted hidden" id="feelHint"></p>
-    <p class="small muted" id="woWarm" style="margin-bottom:0"></p><div class="links" style="margin-top:8px" id="warmBtn"><button onclick="openRoutine('warm')">▶ Warm-up routine · 8 min</button></div>
+    <p class="small muted" id="woWarm" style="margin-bottom:0"></p><div class="links" style="margin-top:8px" id="warmBtn"><button onclick="openRoutine('warm')">▶ Warm-up routine · 10 min</button></div>
   </div>
   <div id="exList"></div>
   <div class="card">
@@ -201,7 +201,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="links" style="margin-top:8px"><button class="primary" onclick="data.icuToken=document.getElementById('icuToken').value.trim();save();syncRuns(true)">Save &amp; sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.4 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.4.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -455,7 +455,7 @@ function captureDraft(){
  d.f={};DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)d.f[id]=el.value});
  data.drafts[k]=d;save();
 }
-function renderWorkout(){drawWorkout();const f=draftFor(woKey)?.f;DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=f?.[id]??(id==='woDate'?localYmd():'')});document.getElementById('woDate').max=localYmd();sessionProgress();elapsedTick();document.getElementById('warmBtn').classList.toggle('hidden',!(woKey&&woKey.length===1));const sb=document.getElementById('stretchBtn');sb.classList.toggle('hidden',woKey==='off');sb.textContent=/run|long/.test(woKey||'')?'▶ Stretch after the run · 5 min':'▶ Stretch after lifting · 5 min'}
+function renderWorkout(){drawWorkout();const f=draftFor(woKey)?.f;DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=f?.[id]??(id==='woDate'?localYmd():'')});document.getElementById('woDate').max=localYmd();sessionProgress();elapsedTick();document.getElementById('warmBtn').classList.toggle('hidden',!(woKey&&woKey.length===1));const sb=document.getElementById('stretchBtn');sb.classList.toggle('hidden',woKey==='off');sb.textContent=/run|long/.test(woKey||'')?'▶ Stretch after the run · 6 min':'▶ Stretch after lifting · 6 min'}
 function drawFeel(){
  const k=woKey,row=document.getElementById('feelRow'),hint=document.getElementById('feelHint'),f=draftFor(k)?.feel;
  row.classList.toggle('hidden',k==='off');hint.classList.toggle('hidden',k==='off'||f!=='rough');
@@ -592,23 +592,34 @@ const FIG={
  hamstring:[{h:[36,16],d:'M60 92 L60 76 L80 76 L80 92 M36 23 L36 58 M36 58 L34 92 M36 58 L66 76 M36 34 L32 58 M36 34 L40 58'},{h:[58,38],d:'M60 92 L60 76 L80 76 L80 92 M36 58 L56 44 M36 58 L34 92 M36 58 L66 76 M56 44 L66 70 M56 44 L62 68'}],
  quad:[{h:[40,16],d:'M40 23 L40 58 M40 58 L36 92 M40 58 L46 92 M40 34 L36 60 M40 34 L44 60'},{h:[40,16],d:'M40 23 L40 58 M40 58 L38 92 M40 58 L46 84 L32 74 M40 34 L30 60 L32 74 M40 34 L46 58'}]};
 FIG.hipflexor[0]=FIG.kneeldiag[0];FIG.trot[0]=FIG.tabletaps[0];
+FIG.catcow=[FIG.tabletaps[0],{h:[18,48],d:'M24 50 Q46 26 66 46 M26 51 L22 92 M30 51 L32 92 M66 46 L68 90 L92 90'}];
+FIG.bridge=[{h:[10,80],d:'M18 82 L52 82 M52 82 L66 62 L80 88 M26 82 L44 84'},{h:[10,80],d:'M18 82 L52 62 M52 62 L66 60 L80 88 M26 82 L44 84'}];
+FIG.ankle=[FIG.kneeldiag[0],{h:[48,18],d:'M48 25 L48 56 M48 56 L74 58 L66 92 M48 56 L32 90 L10 90 M48 34 L70 54'}];
+FIG.adductor=[{h:[50,16],d:'M50 23 L50 58 M50 58 L28 92 M50 58 L72 92 M50 34 L44 60 M50 34 L56 60'},{h:[62,22],d:'M62 29 L62 60 M62 60 L82 64 L84 92 M62 60 L24 92 M62 36 L80 60 M62 36 L78 62'}];
+FIG.chintuck=[{h:[50,18],d:'M44 25 L44 58 M44 58 L40 92 M44 58 L50 92 M44 34 L40 60 M44 34 L48 60'},{h:[42,18],d:'M44 25 L44 58 M44 58 L40 92 M44 58 L50 92 M44 34 L40 60 M44 34 L48 60 M60 16 L52 18'}];
 const HIPF={n:'Half-kneeling hip flexor',d:'45 s each side',fig:'hipflexor',how:'Back knee down, glute on that side tight, pelvis tucked; shift forward an inch. Reach the same-side arm up for more.'};
 const FIG4={n:'Figure-4 glute',d:'45 s each side',fig:'figure4',how:'On your back, ankle over the opposite knee, pull that thigh in towards you.'};
+const HAMS={n:'Standing hamstring',d:'45 s each side',fig:'hamstring',how:'Heel on a step, hinge from the hips with a flat back until the back of the thigh pulls.'};
+const CHIN={n:'Chin tucks',d:'10 reps',fig:'chintuck',how:'Standing tall, slide the chin straight back as if making a double chin, hold 2 s, release. The forward-head fix; no looking down.'};
 const ROUTINES={
- warm:{title:'Warm-up',sub:'Mobility first, then wake the patterns. About 8 minutes; nothing should hurt.',done:'Warm-up done',items:[
+ warm:{title:'Warm-up',sub:'Mobility first, then wake the patterns. About 10 minutes; nothing should hurt.',done:'Warm-up done',items:[
   {n:'Lunge to forward fold',d:'1 min each side',fig:'lungefold',how:'Low lunge, hands either side of the front foot. Straighten the front leg and fold over it, then sink back into the lunge. Slow, breathing out into the fold.'},
   {n:'Table taps',d:'1 min',fig:'tabletaps',how:'Hands and knees, flat back. Lift one hand and tap the opposite shoulder without the hips swaying, then the other. Push the floor away between taps.'},
   {n:'Kneeling diagonal stretch',d:'10 reps each side',fig:'kneeldiag',how:'Half-kneeling, back knee down, glute on that side tight. Reach the arm on the kneeling side up and across; feel the front of the hip and the side open. Back to the start each rep.'},
   {n:'Elbow plank: back and head taps',d:'10 reps',fig:'planktaps',how:'Elbow plank, hips level. Lift one hand to tap your lower back, put it down, then tap the back of your head. Alternate hands; nothing else moves.'},
+  {n:'Cat–cow',d:'8 reps',fig:'catcow',how:'Hands and knees. Round the whole spine up, tuck the chin; then let the belly drop and look up. Slow, one breath each way.'},
+  {n:'Glute bridge',d:'10 reps, 2 s squeeze',fig:'bridge',how:'On your back, feet flat. Drive through the heels, squeeze the glutes hard at the top for two seconds, ribs down. Wakes the glutes up before squats and hinges.'},
+  {n:'Ankle rocks',d:'10 each side',fig:'ankle',how:'Half-kneeling, front foot flat. Drive the knee forward over the toes without the heel lifting. Ankle room for the squat and the hills.'},
   {n:'Wake-up round',d:'1 easy round',fig:'circuit',how:'10 squats, 10 hinges, 10 rows, 10 scapular push-ups, 10 wall slides reaching tall. Easy pace; the first working set of each exercise is light.'}]},
- gym:{title:'Stretch · after lifting',sub:'About 5 minutes. Hold 30–45 s, breathe out into each one.',done:'Stretch done',items:[HIPF,FIG4,
+ gym:{title:'Stretch · after lifting',sub:'About 6 minutes. Hold 30–45 s, breathe out into each one.',done:'Stretch done',items:[HIPF,FIG4,
   {n:'Doorway chest',d:'45 s',fig:'doorway',how:'Forearms on the frame, elbows at shoulder height, step through until the chest opens. Ribs down, chin in.'},
   {n:'Child’s pose with reach',d:'45 s each side',fig:'childs',how:'Sit back towards the heels and walk both hands to one side to open the lat, then the other side.'},
-  {n:'Thoracic rotation',d:'8 each side',fig:'trot',how:'Hands and knees, one hand behind your head; rotate that elbow to the ceiling and follow it with your eyes.'}]},
- run:{title:'Stretch · after running',sub:'About 5 minutes. Hold 30–45 s; the calves get two.',done:'Stretch done',items:[
+  {n:'Thoracic rotation',d:'8 each side',fig:'trot',how:'Hands and knees, one hand behind your head; rotate that elbow to the ceiling and follow it with your eyes.'},HAMS,CHIN]},
+ run:{title:'Stretch · after running',sub:'About 6 minutes. Hold 30–45 s; the calves get two.',done:'Stretch done',items:[
   {n:'Calf, straight then bent knee',d:'30 s each, each side',fig:'calf',how:'Hands on a wall, back leg straight and heel down; then bend the back knee for the lower calf.'},
-  {n:'Standing hamstring',d:'45 s each side',fig:'hamstring',how:'Heel on a step, hinge from the hips with a flat back until the back of the thigh pulls.'},
-  {n:'Quad',d:'45 s each side',fig:'quad',how:'Standing, pull the heel to the glute, knees together, pelvis tucked.'},HIPF,FIG4]}};
+  HAMS,
+  {n:'Quad',d:'45 s each side',fig:'quad',how:'Standing, pull the heel to the glute, knees together, pelvis tucked.'},HIPF,FIG4,
+  {n:'Side-lunge adductor',d:'45 s each side',fig:'adductor',how:'Feet wide, sink onto one bent knee with the other leg straight and the foot flat; hands on the bent knee. Inner thigh of the straight leg.'},CHIN]}};
 function figSvg(key,i){const f=FIG[key][i];return `<svg class="fr f${i}" viewBox="0 0 100 100" aria-hidden="true"><path d="M4 94H96" stroke="var(--muted)" stroke-width="2" opacity=".5"/><circle cx="${f.h[0]}" cy="${f.h[1]}" r="7" fill="none" stroke="currentColor" stroke-width="4"/><path d="${f.d}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
 function openRoutine(kind){const r=ROUTINES[kind];sheet(`<div class="eyebrow">${kind==='warm'?'Before lifting, or any time':'End of the session'}</div><h2>${r.title}</h2><p class="small muted" style="margin-top:4px">${r.sub}</p>
  ${r.items.map(m=>`<div class="hist" style="align-items:flex-start;gap:12px"><span class="thumb mob">${figSvg(m.fig,0)}${figSvg(m.fig,1)}</span><div style="flex:1;min-width:0"><b>${esc(m.n)}</b> <span class="muted">· ${esc(m.d)}</span><br><span class="small muted">${esc(m.how)}</span><div class="links" style="margin-top:4px">${ytLink(m.n+' stretch how to','▶ Demo')}</div></div></div>`).join('')}
