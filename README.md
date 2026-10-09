@@ -55,6 +55,12 @@ Accessories (`rear`, `delt`, `core`, `calf`, `lateral`) are capped at 3 sets and
 - **Add this week to calendar** — downloads a `.ics` with the week's sessions at 06:00 and a 1-hour reminder (floating local time). Re-import after a coach update if the plan changed.
 - **In-app coach (optional)** — paste your own Anthropic API key to get the coach's reply inside the app (see below). The key is stored only on this phone, is sent only to `api.anthropic.com`, and is **excluded from backups**.
 
+## Warm-up and stretches
+
+Three routines live in ROUTINES in index.html, each shown in a sheet with two-pose stick figures (FIG) and a demo link:
+- **Warm-up** (Session screen, strength days): lunge to forward fold, table taps, kneeling diagonal stretch, elbow-plank back and head taps, then one easy wake-up round. Done ticks the Mobility daily chip. Also reachable from the Daily card.
+- **Stretch after lifting** / **Stretch after running** (button above Finish, picked by session type). Done is logged on the session and shows as "+ stretch" in the report.
+
 ## Daily habits
 
 Today has a **Daily** card of tap-to-tick habits (default: posture drill, mobility, walk) for things that happen at other times than the session. Ticks are stored per day, the card shows this week's tally, and the Sunday report carries a `DAILY` line. The coach can change the list with a `DAILY:` directive.

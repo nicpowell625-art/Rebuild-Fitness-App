@@ -53,7 +53,7 @@ header.top{display:flex;justify-content:space-between;align-items:center;padding
 .cue{color:var(--accentInk);font-style:italic;font-size:13px;margin-top:2px}
 .thumb{position:relative;width:60px;height:60px;border-radius:12px;background:var(--fog);overflow:hidden;flex:none;display:grid;place-items:center;color:var(--muted)}.thumb.has{background:#f2f3ef}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.thumb img.f1{animation:flip 1.6s steps(1) infinite}@keyframes flip{0%,50%{opacity:0}50.01%,100%{opacity:1}}
-.thumb.big{width:100%;height:210px;border-radius:14px}.thumb.big img{object-fit:contain}.thumb svg{width:26px;height:26px}
+.thumb.big{width:100%;height:210px;border-radius:14px}.thumb.big img{object-fit:contain}.thumb svg{width:26px;height:26px}.thumb.mob{background:var(--fog);color:var(--ink);width:72px;height:72px}.thumb svg.fr{position:absolute;inset:0;width:100%;height:100%}.thumb svg.f1{animation:flip 1.6s steps(1) infinite}
 .suggest{font-size:13px;color:var(--ink2);background:var(--suggestBg);border-left:3px solid var(--gold);padding:6px 10px;border-radius:8px;margin-top:10px}
 .sethead,.setrow{display:grid;grid-template-columns:26px 60px 1fr 1fr 40px;gap:6px;align-items:center}
 .sethead{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px;padding:0 2px}.sethead span:nth-child(3),.sethead span:nth-child(4){text-align:center}
@@ -98,7 +98,7 @@ textarea{width:100%;min-height:200px;border:1px solid var(--line);border-radius:
 .tick{display:grid;grid-template-columns:56px repeat(5,1fr);gap:4px;font-size:12px;text-align:center;align-items:center;margin-top:6px}.tick div{padding:7px 0}.tick .y{background:var(--ok);color:#fff;border-radius:8px}.tick .n{background:var(--fog);border-radius:8px}
 .bar{height:8px;background:var(--fog);border-radius:4px;overflow:hidden;margin:4px 0 10px}.bar i{display:block;height:100%;background:var(--moss);border-radius:4px}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--clay);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.thumb img.f1{opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.thumb img.f1,.thumb svg.f1{opacity:0}}
 </style>
 </head>
 <body>
@@ -127,13 +127,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="eyebrow">Time available</div><div class="seg" id="timeSeg"></div>
     <div class="row2"><div><div class="eyebrow">Equipment</div><button class="secondary" style="width:100%" onclick="show('settings')" id="eqBtn">—</button></div><div><div class="eyebrow">Feeling</div><div class="seg" id="feelRow" style="margin-top:0"></div></div></div>
     <p class="small muted hidden" id="feelHint"></p>
-    <p class="small muted" id="woWarm" style="margin-bottom:0"></p>
+    <p class="small muted" id="woWarm" style="margin-bottom:0"></p><div class="links" style="margin-top:8px" id="warmBtn"><button onclick="openRoutine('warm')">▶ Warm-up routine · 8 min</button></div>
   </div>
   <div id="exList"></div>
   <div class="card">
     <div class="grid2"><div class="field"><label>Session RPE 1–10</label><input id="woRpe" type="number" min="1" max="10" inputmode="numeric"></div><div class="field"><label>Done on</label><input id="woDate" type="date"></div></div>
     <div class="field" style="margin-top:10px"><label>Note</label><input id="woNote" type="text" placeholder="niggles, wins"></div>
-    <button class="primary big" id="finishBtn" style="margin-top:12px" onclick="completeWorkout()">Finish session</button>
+    <button class="secondary" id="stretchBtn" style="width:100%;margin-top:12px" onclick="openRoutine(/run|long/.test(woKey||'')?'run':'gym')">▶ Stretch</button>
+    <button class="primary big" id="finishBtn" style="margin-top:10px" onclick="completeWorkout()">Finish session</button>
     <button class="ghost" style="width:100%;margin-top:6px" onclick="discardSession()">Discard without saving</button>
   </div>
 </section>
@@ -200,7 +201,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="links" style="margin-top:8px"><button class="primary" onclick="data.icuToken=document.getElementById('icuToken').value.trim();save();syncRuns(true)">Save &amp; sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.3 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.4 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -302,7 +303,7 @@ const SLOT={A:0,run:1,B:2,run2:3,C:4,long:5};
 // Optional Thursday easy run (Settings → Programme): off by default and never counted in the five-session target.
 function applyThu(){WEEK[3]=data.thuRun?{k:'run2',n:'Thu run',cls:'r',sub:'optional'}:{k:'off',n:'Off',cls:'',sub:'walk, mobility'}}
 const reqDone=set=>[...set].filter(k=>k!=='run2').length;
-const WARM='Warm-up 5 min: 20 squats, 10 hinges, 10 lunges a side, 10 rows, 10 scapular push-ups (push the floor away), 10 push-ups, 10 wall slides reaching tall, 30 s deep squat. Mobility 10 min after.';
+const WARM='Warm-up 8 min: the mobility routine, then one easy wake-up round. Open it below. Stretch at the end of the session.';
 
 let data=JSON.parse(localStorage.getItem(KEY)||'{}');
 const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0,thuRun:false,palette:'electric',daily:['Posture drill · 2 min','Mobility · 10 min','Walk'],dailyLog:{}};
@@ -389,7 +390,7 @@ function render(){applyTheme();
  // Daily habits: posture drill, mobility, walks — things that happen at other times than the session. Tap to tick today; the week tally feeds the report.
  {const dc=document.getElementById('dailyCard'),today=localYmd(),dn=new Set(data.dailyLog[today]||[]),m0=monday(new Date());dc.classList.toggle('hidden',!data.daily.length);
   const cnt=n=>{let c=0;for(let i=0;i<7;i++){const d=new Date(m0);d.setDate(d.getDate()+i);if((data.dailyLog[localYmd(d)]||[]).includes(n))c++}return c};
-  dc.innerHTML=`<div class="cardhead"><h2>Daily</h2><span class="small muted">tap when done</span></div><div class="links" style="margin-top:4px">${data.daily.map(n=>`<button class="${dn.has(n)?'on':''}" onclick="toggleDaily(${JSON.stringify(n).replace(/"/g,'&quot;')})">${dn.has(n)?'✓ ':''}${esc(n)}</button>`).join('')}</div><p class="small muted" style="margin:8px 0 0">This week: ${data.daily.map(n=>`${esc(n.split(' · ')[0])} ${cnt(n)}/7`).join(' · ')}</p>`}
+  dc.innerHTML=`<div class="cardhead"><h2>Daily</h2><span class="small muted">tap when done</span></div><div class="links" style="margin-top:4px">${data.daily.map(n=>`<button class="${dn.has(n)?'on':''}" onclick="toggleDaily(${JSON.stringify(n).replace(/"/g,'&quot;')})">${dn.has(n)?'✓ ':''}${esc(n)}</button>`).join('')}</div><div class="links" style="margin-top:6px"><button onclick="openMobility()">▶ Mobility routine · ~8 min</button></div><p class="small muted" style="margin:8px 0 0">This week: ${data.daily.map(n=>`${esc(n.split(' · ')[0])} ${cnt(n)}/7`).join(' · ')}</p>`}
  const cc=document.getElementById('coachCard');cc.classList.toggle('hidden',!data.coachNote);cc.innerHTML=`<h2>Coach note</h2><p style="white-space:pre-line">${esc(data.coachNote)}</p><p class="small muted">Applied ${esc(data.coachDate)}</p>`;
  // Nudges: this week's report on Sunday, last week's until Wednesday if it never went, and a stale backup.
  const due=dow(new Date())===6&&!data.reports.includes(ymd(monday(new Date()))),late=lastDue(),stale=data.sessions.length>=3&&Date.now()-data.lastBackup>14*864e5;
@@ -454,7 +455,7 @@ function captureDraft(){
  d.f={};DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)d.f[id]=el.value});
  data.drafts[k]=d;save();
 }
-function renderWorkout(){drawWorkout();const f=draftFor(woKey)?.f;DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=f?.[id]??(id==='woDate'?localYmd():'')});document.getElementById('woDate').max=localYmd();sessionProgress();elapsedTick()}
+function renderWorkout(){drawWorkout();const f=draftFor(woKey)?.f;DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=f?.[id]??(id==='woDate'?localYmd():'')});document.getElementById('woDate').max=localYmd();sessionProgress();elapsedTick();document.getElementById('warmBtn').classList.toggle('hidden',!(woKey&&woKey.length===1));const sb=document.getElementById('stretchBtn');sb.classList.toggle('hidden',woKey==='off');sb.textContent=/run|long/.test(woKey||'')?'▶ Stretch after the run · 5 min':'▶ Stretch after lifting · 5 min'}
 function drawFeel(){
  const k=woKey,row=document.getElementById('feelRow'),hint=document.getElementById('feelHint'),f=draftFor(k)?.feel;
  row.classList.toggle('hidden',k==='off');hint.classList.toggle('hidden',k==='off'||f!=='rough');
@@ -511,7 +512,7 @@ function drawTimeSeg(){document.getElementById('timeSeg').innerHTML=[['15','15 m
 function toggleEq(id,on){data.equip=on?[...new Set([...data.equip,id])]:data.equip.filter(x=>x!==id);save();render()}
 function completeWorkout(){
  const k=woKey||currentKey();if(k==='off')return;const dr=draftFor(k),today=localYmd(),dv=document.getElementById('woDate').value||today,when=dv===today?new Date():new Date(dv+'T12:00');
- const d=SLOT[k],s={date:when.toISOString(),key:k,weekday:d,name:WEEK[d].n,week:weekNo(when),time:data.time,rpe:document.getElementById('woRpe').value,note:document.getElementById('woNote').value,feel:dr?.feel||'',travel:data.travel,sets:{},pats:{}};
+ const d=SLOT[k],s={date:when.toISOString(),key:k,weekday:d,name:WEEK[d].n,week:weekNo(when),time:data.time,rpe:document.getElementById('woRpe').value,note:document.getElementById('woNote').value,feel:dr?.feel||'',warm:!!dr?.warm,stretch:!!dr?.stretch,travel:data.travel,sets:{},pats:{}};
  // Time from the first logged set to Finish, only when it was logged live (not back-dated, not typed in afterwards).
  if(k.length===1&&dr?.started&&!dr.keep&&dv===today){const mins=Math.round((Date.now()-dr.started)/6e4);if(mins>=3&&mins<240)s.dur=mins}
  if(dr?.keep)Object.assign(s,dr.keep);
@@ -575,6 +576,49 @@ function delHeadache(i){if(!confirm('Delete this headache entry?'))return;data.h
 function discardSession(){const k=woKey||currentKey();if(k==='off')return;if(!confirm('Discard this session? Nothing will be logged.'))return;delete data.drafts[k];data.pick=null;save();timerStop();show('today');toast('Session discarded.')}
 // ---- daily habits ----
 function toggleDaily(n){const day=localYmd(),arr=data.dailyLog[day]||[];const i=arr.indexOf(n);if(i<0)arr.push(n);else arr.splice(i,1);data.dailyLog[day]=arr;save();render()}
+// ---- routines: warm-up (mobility first), stretch after lifting, stretch after running. Two-pose stick figures flip like the photo demos. ----
+const FIG={
+ lungefold:[{h:[42,20],d:'M42 27 L40 56 M40 56 L60 64 L60 92 M40 56 L24 82 L6 92 M41 36 L56 60'},{h:[62,70],d:'M30 50 L60 92 M30 50 L6 92 M30 50 L54 62 M54 62 L62 90 M54 62 L55 90'}],
+ tabletaps:[{h:[16,38],d:'M24 42 L66 44 M26 43 L22 92 M30 43 L32 92 M66 44 L68 90 L92 90'},{h:[16,38],d:'M24 42 L66 44 M30 43 L32 92 M26 43 L42 58 L34 46 M66 44 L68 90 L92 90'}],
+ kneeldiag:[{h:[46,18],d:'M46 25 L46 56 M46 56 L66 58 L66 92 M46 56 L32 90 L10 90 M46 34 L40 60 M46 34 L52 60'},{h:[50,18],d:'M48 25 L46 56 M46 56 L66 58 L66 92 M46 56 L32 90 L10 90 M47 34 L78 8 M47 34 L40 60'}],
+ planktaps:[{h:[12,46],d:'M22 50 L92 70 M22 50 L20 72 L36 72 M24 50 L26 72 L40 72'},{h:[12,46],d:'M22 50 L92 70 M24 50 L26 72 L40 72 M22 50 L34 38 L50 54'}],
+ circuit:[{h:[40,16],d:'M40 23 L40 58 M40 58 L36 92 M40 58 L46 92 M40 34 L36 60 M40 34 L44 60'},{h:[38,34],d:'M38 41 L34 60 M34 60 L52 64 L50 92 M34 60 L18 64 L16 92 M37 48 L60 44'}],
+ hipflexor:[null,{h:[52,18],d:'M52 25 L52 56 M52 56 L68 60 L68 92 M52 56 L34 90 L12 90 M52 34 L56 6 M52 34 L46 60'}],
+ figure4:[{h:[10,80],d:'M18 82 L52 82 M52 82 L66 62 L80 88 M52 82 L60 66 L72 72 M26 82 L36 70'},{h:[10,80],d:'M18 82 L52 82 M52 82 L46 58 L64 60 M52 82 L50 62 L66 70 M26 82 L48 62'}],
+ doorway:[{h:[50,16],d:'M74 6 L74 94 M50 23 L50 58 M50 58 L44 92 M50 58 L58 92 M50 32 L68 32 L68 16'},{h:[54,16],d:'M74 6 L74 94 M52 23 L50 58 M50 58 L40 92 M50 58 L62 92 M56 32 L70 32 L70 16'}],
+ childs:[{h:[40,22],d:'M40 29 L40 60 M40 60 L42 90 L14 90 M40 36 L36 60'},{h:[72,84],d:'M36 66 L64 80 M36 66 L42 90 L14 90 M64 80 L92 90 M62 78 L90 86'}],
+ trot:[null,{h:[16,38],d:'M24 42 L66 44 M30 43 L32 92 M26 43 L30 26 L18 34 M66 44 L68 90 L92 90'}],
+ calf:[{h:[28,22],d:'M8 6 L8 94 M28 29 L36 58 M30 36 L10 40 M36 58 L34 92 M36 58 L62 92'},{h:[28,22],d:'M8 6 L8 94 M28 29 L36 58 M30 36 L10 40 M36 58 L34 92 M36 58 L58 76 L62 92'}],
+ hamstring:[{h:[36,16],d:'M60 92 L60 76 L80 76 L80 92 M36 23 L36 58 M36 58 L34 92 M36 58 L66 76 M36 34 L32 58 M36 34 L40 58'},{h:[58,38],d:'M60 92 L60 76 L80 76 L80 92 M36 58 L56 44 M36 58 L34 92 M36 58 L66 76 M56 44 L66 70 M56 44 L62 68'}],
+ quad:[{h:[40,16],d:'M40 23 L40 58 M40 58 L36 92 M40 58 L46 92 M40 34 L36 60 M40 34 L44 60'},{h:[40,16],d:'M40 23 L40 58 M40 58 L38 92 M40 58 L46 84 L32 74 M40 34 L30 60 L32 74 M40 34 L46 58'}]};
+FIG.hipflexor[0]=FIG.kneeldiag[0];FIG.trot[0]=FIG.tabletaps[0];
+const HIPF={n:'Half-kneeling hip flexor',d:'45 s each side',fig:'hipflexor',how:'Back knee down, glute on that side tight, pelvis tucked; shift forward an inch. Reach the same-side arm up for more.'};
+const FIG4={n:'Figure-4 glute',d:'45 s each side',fig:'figure4',how:'On your back, ankle over the opposite knee, pull that thigh in towards you.'};
+const ROUTINES={
+ warm:{title:'Warm-up',sub:'Mobility first, then wake the patterns. About 8 minutes; nothing should hurt.',done:'Warm-up done',items:[
+  {n:'Lunge to forward fold',d:'1 min each side',fig:'lungefold',how:'Low lunge, hands either side of the front foot. Straighten the front leg and fold over it, then sink back into the lunge. Slow, breathing out into the fold.'},
+  {n:'Table taps',d:'1 min',fig:'tabletaps',how:'Hands and knees, flat back. Lift one hand and tap the opposite shoulder without the hips swaying, then the other. Push the floor away between taps.'},
+  {n:'Kneeling diagonal stretch',d:'10 reps each side',fig:'kneeldiag',how:'Half-kneeling, back knee down, glute on that side tight. Reach the arm on the kneeling side up and across; feel the front of the hip and the side open. Back to the start each rep.'},
+  {n:'Elbow plank: back and head taps',d:'10 reps',fig:'planktaps',how:'Elbow plank, hips level. Lift one hand to tap your lower back, put it down, then tap the back of your head. Alternate hands; nothing else moves.'},
+  {n:'Wake-up round',d:'1 easy round',fig:'circuit',how:'10 squats, 10 hinges, 10 rows, 10 scapular push-ups, 10 wall slides reaching tall. Easy pace; the first working set of each exercise is light.'}]},
+ gym:{title:'Stretch · after lifting',sub:'About 5 minutes. Hold 30–45 s, breathe out into each one.',done:'Stretch done',items:[HIPF,FIG4,
+  {n:'Doorway chest',d:'45 s',fig:'doorway',how:'Forearms on the frame, elbows at shoulder height, step through until the chest opens. Ribs down, chin in.'},
+  {n:'Child’s pose with reach',d:'45 s each side',fig:'childs',how:'Sit back towards the heels and walk both hands to one side to open the lat, then the other side.'},
+  {n:'Thoracic rotation',d:'8 each side',fig:'trot',how:'Hands and knees, one hand behind your head; rotate that elbow to the ceiling and follow it with your eyes.'}]},
+ run:{title:'Stretch · after running',sub:'About 5 minutes. Hold 30–45 s; the calves get two.',done:'Stretch done',items:[
+  {n:'Calf, straight then bent knee',d:'30 s each, each side',fig:'calf',how:'Hands on a wall, back leg straight and heel down; then bend the back knee for the lower calf.'},
+  {n:'Standing hamstring',d:'45 s each side',fig:'hamstring',how:'Heel on a step, hinge from the hips with a flat back until the back of the thigh pulls.'},
+  {n:'Quad',d:'45 s each side',fig:'quad',how:'Standing, pull the heel to the glute, knees together, pelvis tucked.'},HIPF,FIG4]}};
+function figSvg(key,i){const f=FIG[key][i];return `<svg class="fr f${i}" viewBox="0 0 100 100" aria-hidden="true"><path d="M4 94H96" stroke="var(--muted)" stroke-width="2" opacity=".5"/><circle cx="${f.h[0]}" cy="${f.h[1]}" r="7" fill="none" stroke="currentColor" stroke-width="4"/><path d="${f.d}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function openRoutine(kind){const r=ROUTINES[kind];sheet(`<div class="eyebrow">${kind==='warm'?'Before lifting, or any time':'End of the session'}</div><h2>${r.title}</h2><p class="small muted" style="margin-top:4px">${r.sub}</p>
+ ${r.items.map(m=>`<div class="hist" style="align-items:flex-start;gap:12px"><span class="thumb mob">${figSvg(m.fig,0)}${figSvg(m.fig,1)}</span><div style="flex:1;min-width:0"><b>${esc(m.n)}</b> <span class="muted">· ${esc(m.d)}</span><br><span class="small muted">${esc(m.how)}</span><div class="links" style="margin-top:4px">${ytLink(m.n+' stretch how to','▶ Demo')}</div></div></div>`).join('')}
+ <button class="primary big" style="margin-top:14px" onclick="routineDone('${kind}')">${r.done}</button>`)}
+const openMobility=()=>openRoutine('warm');
+// Warm-up Done ticks the Mobility chip (and marks the draft); stretch Done is logged on the session and shows in the report.
+function routineDone(kind){const k=view==='workout'&&woKey&&woKey!=='off'?woKey:null;
+ if(kind==='warm'){const n=data.daily.find(x=>/mobil/i.test(x)),day=localYmd(),arr=data.dailyLog[day]||[];if(n&&!arr.includes(n)){arr.push(n);data.dailyLog[day]=arr}}
+ if(k){const d=data.drafts[k]||(data.drafts[k]={t:Date.now(),sets:{},f:{}});d.t=Date.now();d[kind==='warm'?'warm':'stretch']=true}
+ save();closeSheet();render();toast(kind==='warm'?'Warm-up done · Mobility ticked.':'Stretch logged for this session.')}
 // ---- rest timer ----
 let tEnd=0,tInt=null;
 let tTotal=0;
@@ -645,7 +689,7 @@ function makeReport(){
  const m=new Date((document.getElementById('repWeek').value||localYmd(monday(new Date())))+'T00:00'),cur=+m===+monday(new Date()),w=weekNo(m),ss=data.sessions.filter(s=>inWeek(s.date,m)),ws=data.weights.filter(x=>inWeek(x.date,m)),ha=data.headaches.filter(x=>inWeek(x.date,m));
  const v=id=>document.getElementById(id).value||'—',trav=ss.some(s=>s.travel)||(cur&&data.travel);
  let L=[`REBUILD WEEKLY REPORT`,`Week ${w} of 12, phase ${phase(w)}, ${fmt(m)} – ${fmt(new Date(m.getTime()+6*864e5))}${trav?' (travel week)':''}`,`Equipment: ${data.equip.map(q=>EQUIP[q]).join(', ')||'bodyweight'} · streak ${streak()} wk`,``,`SESSIONS ${ss.filter(x=>x.key!=='run2').length}/${trav?3:5}${ss.some(x=>x.key==='run2')?' + optional Thu run':''}`];
- ss.forEach(s=>{L.push(`${DAYS[dow(new Date(s.date))]} ${s.name}${s.time&&s.key.length===1?` (${s.time} min plan${s.dur?', took '+s.dur:''})`:''}${s.min?` ${s.min} min${s.km?', '+s.km+' km':''}${s.up?', '+s.up+' m↑':''}${s.pace?', '+paceStr(s.pace)+'/km':''}${s.hr?', HR '+s.hr:''}${s.src==='garmin'?' [Garmin]':''}`:''}${s.feel?` felt ${s.feel}`:''}${s.rpe?` RPE ${s.rpe}`:''}${s.note?' — '+s.note:''}`);
+ ss.forEach(s=>{L.push(`${DAYS[dow(new Date(s.date))]} ${s.name}${s.time&&s.key.length===1?` (${s.time} min plan${s.dur?', took '+s.dur:''})`:''}${s.min?` ${s.min} min${s.km?', '+s.km+' km':''}${s.up?', '+s.up+' m↑':''}${s.pace?', '+paceStr(s.pace)+'/km':''}${s.hr?', HR '+s.hr:''}${s.src==='garmin'?' [Garmin]':''}`:''}${s.feel?` felt ${s.feel}`:''}${s.stretch?' + stretch':''}${s.rpe?` RPE ${s.rpe}`:''}${s.note?' — '+s.note:''}`);
   Object.entries(s.sets||{}).forEach(([n,a])=>{const u=LIB.find(e=>e.name===n)?.load==='time'?' s':'',f=a=>a.map(x=>`${x.kg?x.kg+'×':''}${x.reps||'?'}${u}`).join(', '),prev=history(n).filter(h=>h.date<s.date).at(-1);L.push(`  ${n}: ${f(a)} (${prev?'prev '+f(prev.sets):'first time'})`)})});
  const b=balance(m);L.push(``,`HARD SETS push ${b.push} · pull ${b.pull} · squat/lunge ${b.sq} · hinge ${b.hg}`);
  if(data.daily.length){const cnt=n=>{let c=0;for(let i=0;i<7;i++){const d=new Date(m);d.setDate(d.getDate()+i);if((data.dailyLog[localYmd(d)]||[]).includes(n))c++}return c};L.push(``,`DAILY ${data.daily.map(n=>`${n} ${cnt(n)}/7`).join(' · ')}`)}
