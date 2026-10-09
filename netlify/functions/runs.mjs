@@ -10,7 +10,7 @@ export default async (req) => {
   const token = process.env.REBUILD_TOKEN;
   if (token && url.searchParams.get('t') !== token) return j({error: 'bad token'}, 401);
   const key = process.env.INTERVALS_API_KEY, id = process.env.INTERVALS_ATHLETE_ID || '0';
-  if (!key) return j({error: 'not configured'}, 503);
+  if (!key) return j({error: 'not configured', seen: Object.keys(process.env).filter(k => /interval|icu|rebuild|garmin/i.test(k))}, 503); // names only, to catch a misnamed variable
   const since = url.searchParams.get('since') || '';
   const oldest = /^\d{4}-\d{2}-\d{2}$/.test(since) ? since : new Date(Date.now() - 28 * 864e5).toISOString().slice(0, 10);
   const newest = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
