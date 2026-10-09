@@ -9,7 +9,8 @@ export default async (req) => {
   const url = new URL(req.url);
   const token = process.env.REBUILD_TOKEN;
   if (token && url.searchParams.get('t') !== token) return j({error: 'bad token'}, 401);
-  const key = process.env.INTERVALS_API_KEY, id = process.env.INTERVALS_ATHLETE_ID || '0';
+  // Accept INTERVALS_API_KEY, or any variable whose name starts with 'intervals' (easy to misname in the Netlify UI).
+  const key = process.env.INTERVALS_API_KEY || (Object.entries(process.env).find(([k, v]) => /^intervals/i.test(k) && !/athlete/i.test(k) && v) || [])[1], id = process.env.INTERVALS_ATHLETE_ID || '0';
   if (!key) return j({error: 'not configured', seen: Object.keys(process.env).filter(k => /interval|icu|rebuild|garmin/i.test(k))}, 503); // names only, to catch a misnamed variable
   const since = url.searchParams.get('since') || '';
   const oldest = /^\d{4}-\d{2}-\d{2}$/.test(since) ? since : new Date(Date.now() - 28 * 864e5).toISOString().slice(0, 10);
