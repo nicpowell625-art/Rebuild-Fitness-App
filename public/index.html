@@ -192,7 +192,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.0.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.0.2 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -291,7 +291,7 @@ const RUN={1:'30 min continuous, easy.',2:'35–40 min easy. Rope after: 5–8 �
 const LONG=[null,'45–60 min easy trail','45–60 min easy trail','60 min','70 min','80 min, hills walked','90 min, hills walked','90 min','105 min, run the hills','120 min','75 min (down week)','105 min','120 min'];
 const WEEK=[{k:'A',n:'Strength A',cls:'s',sub:'lower'},{k:'run',n:'Easy run',cls:'r',sub:'30–40 min'},{k:'B',n:'Strength B',cls:'s',sub:'upper'},{k:'off',n:'Off',cls:'',sub:'walk, mobility'},{k:'C',n:'Strength C',cls:'s',sub:'full body'},{k:'long',n:'Long trail',cls:'c',sub:'run / hike'},{k:'plan',n:'Off',cls:'',sub:'plan the week'}];
 const SLOT={A:0,run:1,B:2,C:4,long:5};
-const WARM='Warm-up 5 min: 20 squats, 10 hinges, 10 lunges a side, 10 rows, 10 push-ups, 10 wall slides, 30 s deep squat. Mobility 10 min after.';
+const WARM='Warm-up 5 min: 20 squats, 10 hinges, 10 lunges a side, 10 rows, 10 scapular push-ups (push the floor away), 10 push-ups, 10 wall slides reaching tall, 30 s deep squat. Mobility 10 min after.';
 
 let data=JSON.parse(localStorage.getItem(KEY)||'{}');
 const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5'};
