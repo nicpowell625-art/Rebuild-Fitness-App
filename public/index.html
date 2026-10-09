@@ -65,6 +65,9 @@ header.top{display:flex;justify-content:space-between;align-items:center;padding
 .setrow input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}.setrow input[type=checkbox]:checked::after{content:'✓';color:#fff;font-weight:800;font-size:16px}
 .swaps{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.swaps button{font-size:12px;padding:7px 10px;border-radius:999px;background:var(--fog);color:var(--ink2);font-weight:600;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.swaps .add{color:var(--accentInk)}
 .links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.links a,.links button{font-size:13px;padding:8px 12px;border-radius:999px;background:var(--fog);color:var(--ink);text-decoration:none;font-weight:600}.links button.on{background:var(--moss);color:#fff}.links button.primary{background:var(--clay);color:#fff}
+.clock{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accentInk);line-height:1.1;margin-top:2px}.clock small{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-left:5px}
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px;box-shadow:0 0 0 1px #0002}
+.ghost{background:none;color:var(--muted);font-weight:600;padding:10px}
 /* Sheet */
 #sheet{position:fixed;inset:0;z-index:20}#sheet .backdrop{position:absolute;inset:0;background:#0009;animation:fadeIn .2s}@keyframes fadeIn{from{opacity:0}}
 #sheet .panel{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:var(--card);border-radius:20px 20px 0 0;padding:8px 16px calc(24px + env(safe-area-inset-bottom));animation:up .22s ease;max-width:640px;margin:auto}@keyframes up{from{transform:translateY(40px);opacity:0}}
@@ -108,6 +111,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="chips" id="pickRow"></div>
   </div>
   <div class="tiles"><div class="tile"><b id="wkDone">0/5</b><span>This week</span></div><div class="tile"><b id="weekNo">1</b><span>Week of 12</span></div><div class="tile"><b id="streak">0</b><span>Streak</span></div><div class="tile"><b id="bwNow">—</b><span>kg</span></div></div>
+  <div class="card" id="dailyCard"></div>
   <div class="card hidden" id="doneCard"></div>
   <div class="card nudge" id="sundayCard"></div>
   <div class="card" id="coachCard"></div>
@@ -117,7 +121,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </section>
 
 <section id="workout" class="view hidden">
-  <div class="wobar" id="woBar"><div><div class="eyebrow" id="woElapsed">Session</div><h2 id="woTitle"></h2></div><button class="primary" id="finishTop" onclick="completeWorkout()">Finish</button></div>
+  <div class="wobar" id="woBar"><div><h2 id="woTitle"></h2><div class="eyebrow" id="woElapsed">Not started</div></div><button class="primary" id="finishTop" onclick="completeWorkout()">Finish</button></div>
   <div class="card">
     <p class="small muted" id="woIntro" style="margin-top:0"></p>
     <div class="eyebrow">Time available</div><div class="seg" id="timeSeg"></div>
@@ -130,6 +134,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="grid2"><div class="field"><label>Session RPE 1–10</label><input id="woRpe" type="number" min="1" max="10" inputmode="numeric"></div><div class="field"><label>Done on</label><input id="woDate" type="date"></div></div>
     <div class="field" style="margin-top:10px"><label>Note</label><input id="woNote" type="text" placeholder="niggles, wins"></div>
     <button class="primary big" id="finishBtn" style="margin-top:12px" onclick="completeWorkout()">Finish session</button>
+    <button class="ghost" style="width:100%;margin-top:6px" onclick="discardSession()">Discard without saving</button>
   </div>
 </section>
 
@@ -168,7 +173,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </section>
 
 <section id="settings" class="view hidden">
-  <div class="card"><div class="cardhead"><h2>Appearance</h2></div><div class="field"><label>Theme</label><select id="themeSel" onchange="setTheme(this.value)"><option value="auto">Match my phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div>
+  <div class="card"><div class="cardhead"><h2>Appearance</h2></div><div class="field"><label>Theme</label><select id="themeSel" onchange="setTheme(this.value)"><option value="auto">Match my phone</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+    <div class="eyebrow" style="margin-top:12px">Colour scheme</div><div class="links" id="palRow" style="margin-top:4px"></div></div>
   <div class="card"><div class="cardhead"><h2>Equipment</h2></div><p class="small muted" style="margin-top:0">Tick what's available. Sessions rebuild themselves around it.</p>
     <div class="eyebrow" style="margin-top:10px">Set-ups — tap to load</div><div class="links" id="profRow" style="margin-top:4px"></div>
     <div class="row" style="margin-top:8px"><input id="profName" type="text" placeholder="Name this set-up" autocomplete="off"><button class="secondary" onclick="saveProfile()">Save current</button></div>
@@ -177,6 +183,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="card"><div class="cardhead"><h2>Programme</h2></div>
     <div class="field"><label>Start date (Monday of week 1)</label><input id="startDate" type="date" onchange="setStart(this.value)"></div>
     <label class="tog"><input type="checkbox" id="travel" onchange="setTravel(this.checked)"> Travel week: three-session floor</label>
+    <label class="tog"><input type="checkbox" id="thuRun" onchange="data.thuRun=this.checked;save();applyThu();render()"> Optional Thursday easy run (30–40 min; doesn’t count toward the five)</label>
     <div class="field" style="margin-top:10px"><label>Default rest between sets (s)</label><input id="restSec" type="number" inputmode="numeric" onchange="setRest(this.value)"></div>
     <label class="tog"><input type="checkbox" id="sound" onchange="data.sound=this.checked;save()"> Beep when the rest timer ends</label>
     <p class="small muted" style="margin-top:12px">Put the week's sessions in your phone calendar with a reminder. Import again after a coach update if the plan changed.</p>
@@ -193,7 +200,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="links" style="margin-top:8px"><button class="primary" onclick="data.icuToken=document.getElementById('icuToken').value.trim();save();syncRuns(true)">Save &amp; sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.2.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.3 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -291,11 +298,14 @@ const SESS={A:['squat','hinge','unilateral','hpull','uhinge','carry','calf'],B:[
 const RUN={1:'30 min continuous, easy.',2:'35–40 min easy. Rope after: 5–8 × 30 s.',3:'40 min easy. Rope after: up to 10 × 1 min.'};
 const LONG=[null,'45–60 min easy trail','45–60 min easy trail','60 min','70 min','80 min, hills walked','90 min, hills walked','90 min','105 min, run the hills','120 min','75 min (down week)','105 min','120 min'];
 const WEEK=[{k:'A',n:'Strength A',cls:'s',sub:'lower'},{k:'run',n:'Easy run',cls:'r',sub:'30–40 min'},{k:'B',n:'Strength B',cls:'s',sub:'upper'},{k:'off',n:'Off',cls:'',sub:'walk, mobility'},{k:'C',n:'Strength C',cls:'s',sub:'full body'},{k:'long',n:'Long trail',cls:'c',sub:'run / hike'},{k:'plan',n:'Off',cls:'',sub:'plan the week'}];
-const SLOT={A:0,run:1,B:2,C:4,long:5};
+const SLOT={A:0,run:1,B:2,run2:3,C:4,long:5};
+// Optional Thursday easy run (Settings → Programme): off by default and never counted in the five-session target.
+function applyThu(){WEEK[3]=data.thuRun?{k:'run2',n:'Thu run',cls:'r',sub:'optional'}:{k:'off',n:'Off',cls:'',sub:'walk, mobility'}}
+const reqDone=set=>[...set].filter(k=>k!=='run2').length;
 const WARM='Warm-up 5 min: 20 squats, 10 hinges, 10 lunges a side, 10 rows, 10 scapular push-ups (push the floor away), 10 push-ups, 10 wall slides reaching tall, 30 s deep squat. Mobility 10 min after.';
 
 let data=JSON.parse(localStorage.getItem(KEY)||'{}');
-const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0};
+const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0,thuRun:false,palette:'electric',daily:['Posture drill · 2 min','Mobility · 10 min','Walk'],dailyLog:{}};
 for(const k in D)if(data[k]===undefined)data[k]=D[k];
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 const WEEKS=12; // programme length; sessions past this roll into a maintenance state
@@ -317,7 +327,7 @@ function phase(w){return w<=2?1:w<=6?2:3}
 function fmt(d){return d.toLocaleDateString('en-ZA',{day:'2-digit',month:'short'})}
 function ymd(d){return d.toISOString().slice(0,10)}
 function inWeek(iso,m){const t=new Date(iso),e=new Date(m);e.setDate(e.getDate()+7);return t>=m&&t<e}
-function order(){return data.travel?['A','B','long']:['A','run','B','C','long']}
+function order(){return data.travel?['A','B','long']:data.thuRun?['A','run','B','run2','C','long']:['A','run','B','C','long']}
 function doneKeys(m=monday(new Date())){return new Set(data.sessions.filter(s=>inWeek(s.date,m)).map(s=>s.key))}
 function nextUp(){const d=doneKeys();return order().find(k=>!d.has(k))||null}
 // A manual pick only holds for the day it was made; after that the schedule takes over again.
@@ -364,18 +374,22 @@ function render(){applyTheme();
  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'});
  document.getElementById('todayTitle').textContent=k==='off'?(nextUp()?'Off':'Week complete'):(WEEK[dow(new Date())].k===k?day.n:'Next up: '+day.n);
  const dk=doneKeys();document.getElementById('pickRow').innerHTML=order().map(x=>`<button class="${x===k?'on':''}" onclick="pick('${x}')">${WEEK[SLOT[x]].n}${dk.has(x)?' ✓':''}</button>`).join('');
- document.getElementById('todayDesc').textContent=k==='run'?RUN[p]:k==='long'?longFor(w):k==='off'?(nextUp()?'Walk and 10 min mobility. Or pick a session below if travel moved things.':'Rest. Sunday: send the report.'):`${data.time} min · ${data.equip.map(q=>EQUIP[q]).join(', ')||'bodyweight only'}. Lift before anything else today.`;
+ document.getElementById('todayDesc').textContent=(k==='run'||k==='run2')?RUN[p]:k==='long'?longFor(w):k==='off'?(nextUp()?'Walk and 10 min mobility. Or pick a session below if travel moved things.':'Rest. Sunday: send the report.'):`${data.time} min · ${data.equip.map(q=>EQUIP[q]).join(', ')||'bodyweight only'}. Lift before anything else today.`;
  document.getElementById('startBtn').classList.toggle('hidden',k==='off');
  const done=new Set([...dk].map(x=>SLOT[x])),target=data.travel?3:5;
- document.getElementById('wkDone').textContent=`${Math.min(dk.size,target)}/${target}`;document.getElementById('weekNo').textContent=w>WEEKS?WEEKS+'+':w;document.getElementById('streak').textContent=streak();document.getElementById('bwNow').textContent=data.weights.length?data.weights.at(-1).v:'—';
+ document.getElementById('wkDone').textContent=`${Math.min(reqDone(dk),target)}/${target}`;document.getElementById('weekNo').textContent=w>WEEKS?WEEKS+'+':w;document.getElementById('streak').textContent=streak();document.getElementById('bwNow').textContent=data.weights.length?data.weights.at(-1).v:'—';
  // Block finished: nudge a new 12-week block; the schedule keeps running as maintenance until then.
  const dcard=document.getElementById('doneCard'),over=w>WEEKS;dcard.classList.toggle('hidden',!over);
  if(over){const b=blockStats();dcard.innerHTML=`<h2>Block complete 🎉</h2><p>Twelve weeks done — ${b.done}/${b.target} sessions (${b.pct}%)${b.bwDelta!=null?`, ${b.bwDelta<0?'−':'+'}${Math.abs(b.bwDelta).toFixed(1)} kg`:''}. Full breakdown on Progress.</p><p class="small muted">Sessions still log and count; start a fresh block to reset the plan to week 1.</p><button class="primary" onclick="newBlock()">Start a new 12-week block</button>`}
- const SHORT={A:'Lower',run:'Run',B:'Upper',off:'Rest',C:'Full',long:'Trail',plan:'Plan'},td=dow(new Date());
- document.getElementById('weekStrip').innerHTML=WEEK.map((d,i)=>`<div class="wd ${i===td?'today':''}"><span class="wl">${'MTWTFSS'[i]}</span><span class="wc ${d.cls} ${done.has(i)?'done':''}">${done.has(i)?'✓':d.k.length===1?d.k:d.k==='run'?'R':d.k==='long'?'L':'·'}</span><span class="ws">${SHORT[d.k]}</span></div>`).join('');
+ const SHORT={A:'Lower',run:'Run',B:'Upper',run2:'Run',off:'Rest',C:'Full',long:'Trail',plan:'Plan'},td=dow(new Date());
+ document.getElementById('weekStrip').innerHTML=WEEK.map((d,i)=>`<div class="wd ${i===td?'today':''}"><span class="wl">${'MTWTFSS'[i]}</span><span class="wc ${d.cls} ${done.has(i)?'done':''}">${done.has(i)?'✓':d.k.length===1?d.k:/run/.test(d.k)?'R':d.k==='long'?'L':'·'}</span><span class="ws">${SHORT[d.k]}</span></div>`).join('');
  document.getElementById('weekNote').textContent=p===1?'Two working sets, three reps in the tank. Five ticks is the whole job.':p===2?'Three working sets, one to two in the tank on the last. Hit the top of the range clean, then go up.':'Mass first: tempo, pauses, heavy single-leg work. Saturday builds to 120 min.';
- document.getElementById('startBtn').textContent=draftFor(k)?'Continue session':'Start session';
+ {const d0=draftFor(k);document.getElementById('startBtn').textContent=d0?(d0.started?`Continue session · ${Math.max(1,Math.round((Date.now()-d0.started)/6e4))} min in`:'Continue session'):'Start session'}
  {const hw=data.headaches.filter(x=>inWeek(x.date,monday(new Date()))),last=data.headaches.at(-1);document.getElementById('haSummary').textContent=hw.length?`${hw.length} this week · last ${DAYS[dow(new Date(last.date))]} ${last.i}/10${last.h?', '+last.h+' h':''}${last.n?' · '+last.n:''}`:last?`None this week · last ${fmt(new Date(last.date))}`:'None logged. Tap Log one when you get one; it goes into the Sunday report.'}
+ // Daily habits: posture drill, mobility, walks — things that happen at other times than the session. Tap to tick today; the week tally feeds the report.
+ {const dc=document.getElementById('dailyCard'),today=localYmd(),dn=new Set(data.dailyLog[today]||[]),m0=monday(new Date());dc.classList.toggle('hidden',!data.daily.length);
+  const cnt=n=>{let c=0;for(let i=0;i<7;i++){const d=new Date(m0);d.setDate(d.getDate()+i);if((data.dailyLog[localYmd(d)]||[]).includes(n))c++}return c};
+  dc.innerHTML=`<div class="cardhead"><h2>Daily</h2><span class="small muted">tap when done</span></div><div class="links" style="margin-top:4px">${data.daily.map(n=>`<button class="${dn.has(n)?'on':''}" onclick="toggleDaily(${JSON.stringify(n).replace(/"/g,'&quot;')})">${dn.has(n)?'✓ ':''}${esc(n)}</button>`).join('')}</div><p class="small muted" style="margin:8px 0 0">This week: ${data.daily.map(n=>`${esc(n.split(' · ')[0])} ${cnt(n)}/7`).join(' · ')}</p>`}
  const cc=document.getElementById('coachCard');cc.classList.toggle('hidden',!data.coachNote);cc.innerHTML=`<h2>Coach note</h2><p style="white-space:pre-line">${esc(data.coachNote)}</p><p class="small muted">Applied ${esc(data.coachDate)}</p>`;
  // Nudges: this week's report on Sunday, last week's until Wednesday if it never went, and a stale backup.
  const due=dow(new Date())===6&&!data.reports.includes(ymd(monday(new Date()))),late=lastDue(),stale=data.sessions.length>=3&&Date.now()-data.lastBackup>14*864e5;
@@ -383,14 +397,23 @@ function render(){applyTheme();
  sc.innerHTML=(due||late?`<h2>${late?'Last week’s report':'Sunday'}</h2><p>${late?'Still due. The Report tab is set to last week until Wednesday.':'Score the week and send the report. Two minutes.'}</p><button class="primary" onclick="show('report')">Do the report</button>`:'')+(stale?`<p class="small muted" style="margin-top:${due||late?10:0}px">No backup ${data.lastBackup?'since '+fmt(new Date(data.lastBackup)):'yet'}, and your log lives only on this phone. <a href="#" onclick="show('settings');return false">Settings → Data</a>.</p>`:'');
  document.getElementById('startDate').value=data.start;document.getElementById('travel').checked=data.travel;document.getElementById('restSec').value=data.rest;drawTimeSeg();
  document.getElementById('sound').checked=data.sound;document.getElementById('bkAge').textContent=data.lastBackup?`Last backup ${fmt(new Date(data.lastBackup))}.`:'No backup yet.';document.getElementById('shareBk').classList.toggle('hidden',!CAN_SHARE_FILES);
- document.getElementById('garminOn').checked=data.garmin;document.getElementById('icuToken').value=data.icuToken;{const im=document.getElementById('icuMsg');if(!im.textContent&&data.icuLast)im.textContent='Last sync '+fmt(new Date(data.icuLast))+'.'}document.getElementById('themeSel').value=data.theme;document.getElementById('aiModel').value=data.aiModel;document.getElementById('apiKey').value=data.apiKey;document.getElementById('keyMsg').textContent=data.apiKey?'A key is saved on this phone. The in-app coach is on.':'';
+ document.getElementById('palRow').innerHTML=Object.entries(PALETTES).map(([k,p])=>`<button class="${data.palette===k?'on':''}" onclick="setPalette('${k}')"><span class="sw" style="background:linear-gradient(135deg,${p.l.heroA},${p.l.clay})"></span>${p.n}</button>`).join('');document.getElementById('thuRun').checked=data.thuRun;document.getElementById('garminOn').checked=data.garmin;document.getElementById('icuToken').value=data.icuToken;{const im=document.getElementById('icuMsg');if(!im.textContent&&data.icuLast)im.textContent='Last sync '+fmt(new Date(data.icuLast))+'.'}document.getElementById('themeSel').value=data.theme;document.getElementById('aiModel').value=data.aiModel;document.getElementById('apiKey').value=data.apiKey;document.getElementById('keyMsg').textContent=data.apiKey?'A key is saved on this phone. The in-app coach is on.':'';
  document.getElementById('eqChk').innerHTML=Object.entries(EQUIP).map(([id,n])=>`<label><input type="checkbox" ${data.equip.includes(id)?'checked':''} onchange="toggleEq('${id}',this.checked)">${n}</label>`).join('')+`<label><input type="checkbox" ${data.equip.length?'':'checked'} onchange="if(this.checked){data.equip=[];save();render()}">Bodyweight only</label>`;
  document.getElementById('profRow').innerHTML=data.profiles.map((p,i)=>`<button class="${sameEquip(p.equip)?'on':''}" onclick="applyProfile(${i})">${esc(p.name)}</button>`).join('')+(data.profiles.length?`<button onclick="delProfile()" aria-label="remove a set-up">✕</button>`:'<span class="small muted">None saved.</span>');
  document.getElementById('eqBtn').textContent=data.equip.map(q=>EQUIP[q].split(' ')[0]).join(', ')||'Bodyweight';
 }
 // ---- theme, equipment set-ups, calendar, block summary, in-app coach ----
 function applyTheme(){const t=data.theme;if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
- const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);document.querySelector('meta[name=theme-color]').setAttribute('content',dark?'#0b0f15':'#f3f5f8')}
+ const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);document.querySelector('meta[name=theme-color]').setAttribute('content',dark?'#0b0f15':'#f3f5f8');applyPalette()}
+// Colour schemes: each overrides the accent/hero/day tokens for light (l) and dark (d); the base tokens stay as the fallback.
+const PALETTES={
+ electric:{n:'Electric',l:{clay:'#3b6cff',accentInk:'#2f5bea',heroA:'#22325a',heroB:'#0d1526',moss:'#1e2b45',sage:'#9fd8cf'},d:{clay:'#5b8cff',accentInk:'#8fb0ff',heroA:'#1b2742',heroB:'#0a1020',moss:'#2f4270',sage:'#9fd8cf'}},
+ forest:{n:'Forest',l:{clay:'#c25a2c',accentInk:'#2f4a36',heroA:'#2f4a36',heroB:'#1b2a1f',moss:'#2f4a36',sage:'#8fae8c'},d:{clay:'#d9743f',accentInk:'#9ccaa2',heroA:'#2b4535',heroB:'#101a14',moss:'#3a5a44',sage:'#7fa385'}},
+ ember:{n:'Ember',l:{clay:'#e85d2a',accentInk:'#c2410c',heroA:'#2b2a33',heroB:'#121217',moss:'#2b2a33',sage:'#f4c6a5'},d:{clay:'#ff7a45',accentInk:'#ffab85',heroA:'#2a2730',heroB:'#0f0e13',moss:'#3b3845',sage:'#f4c6a5'}},
+ teal:{n:'Teal',l:{clay:'#0f9d8f',accentInk:'#0b766c',heroA:'#0f3d3e',heroB:'#082425',moss:'#0f3d3e',sage:'#bfe3dc'},d:{clay:'#2cc4b4',accentInk:'#7fe0d4',heroA:'#0f3a3b',heroB:'#06191a',moss:'#1f5a5b',sage:'#bfe3dc'}},
+ graphite:{n:'Graphite',l:{clay:'#4b5563',accentInk:'#374151',heroA:'#1f2937',heroB:'#0b1220',moss:'#1f2937',sage:'#cbd5e1'},d:{clay:'#6b7280',accentInk:'#cbd5e1',heroA:'#1e2430',heroB:'#0a0d12',moss:'#3a4252',sage:'#cbd5e1'}}};
+function applyPalette(){const p=PALETTES[data.palette]||PALETTES.electric,dark=data.theme==='dark'||(data.theme==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches),v=dark?p.d:p.l,st=document.documentElement.style;for(const k in v)st.setProperty('--'+k,v[k])}
+function setPalette(k){data.palette=k;save();applyTheme();render()}
 function setTheme(v){data.theme=v;save();applyTheme()}
 const sameEquip=eq=>eq.length===data.equip.length&&eq.every(q=>data.equip.includes(q));
 function applyProfile(i){data.equip=[...data.profiles[i].equip];save();render();toast(`Loaded ${data.profiles[i].name}`)}
@@ -400,7 +423,7 @@ function newBlock(){if(!confirm('Start a new 12-week block from this Monday? You
 // One .ics with this week's scheduled sessions at 06:00 and a 1-hour reminder. Floating local time, so it lands at 6am wherever the phone is.
 function exportIcs(){
  const m=monday(new Date()),pad=n=>String(n).padStart(2,'0'),f=d=>`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
- const durOf=k=>k==='long'?150:k==='run'?45:75;
+ const durOf=k=>k==='long'?150:/run/.test(k)?45:75;
  let L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Rebuild//Training//EN','CALSCALE:GREGORIAN'];
  order().forEach(k=>{const slot=SLOT[k],d=new Date(m);d.setDate(d.getDate()+slot);d.setHours(6,0,0,0);const end=new Date(d.getTime()+durOf(k)*6e4),nm=k==='long'?WEEK[slot].n+' ('+longFor(weekNo())+')':WEEK[slot].n;
   L.push('BEGIN:VEVENT',`UID:rebuild-${ymd(d)}-${k}@rebuild.app`,`DTSTAMP:${f(new Date())}`,`DTSTART:${f(d)}`,`DTEND:${f(end)}`,`SUMMARY:Rebuild — ${nm}`,'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Rebuild session','TRIGGER:-PT1H','END:VALARM','END:VEVENT')});
@@ -411,7 +434,7 @@ function blockStats(){
  const s=monday(data.start+'T00:00'),wk=w=>{const m=new Date(s);m.setDate(m.getDate()+7*(w-1));return m},end=wk(WEEKS+1);
  const inBlock=x=>{const d=new Date(x.date);return d>=s&&d<end};
  let done=0,target=0,strength=0,km=0;
- for(let w=1;w<=WEEKS;w++){const m=wk(w),trav=data.sessions.some(x=>inWeek(x.date,m)&&x.travel);target+=trav?3:5;done+=doneKeys(m).size}
+ for(let w=1;w<=WEEKS;w++){const m=wk(w),trav=data.sessions.some(x=>inWeek(x.date,m)&&x.travel);target+=trav?3:5;done+=reqDone(doneKeys(m))}
  data.sessions.filter(inBlock).forEach(x=>{if(x.key&&x.key.length===1)strength++;km+=parseFloat(x.km)||0});
  const bw=data.weights.filter(inBlock),bwDelta=bw.length>1?bw.at(-1).v-bw[0].v:null;
  // A PR is an exercise whose best set now beats its very first logged set this block.
@@ -442,8 +465,8 @@ function setFeel(v){captureDraft();const d=data.drafts[woKey];if(!d)return;d.fee
 function drawWorkout(){
  const w=weekNo(),p=phase(w),k=woKey=currentKey();drawFeel();const title=document.getElementById('woTitle'),intro=document.getElementById('woIntro'),list=document.getElementById('exList');document.getElementById('woWarm').textContent='';
  if(k==='off'){title.textContent='Nothing queued';intro.textContent='Pick a session on the Today screen.';list.innerHTML='';return}
- if(k==='run'||k==='long'){title.textContent=WEEK[SLOT[k]].n;intro.textContent=k==='run'?RUN[p]:longFor(w);
-  list.innerHTML=`<div class="card ex"><div class="exhead"><span class="thumb">${ICON_RUN}</span><div><div class="eyebrow">${k==='run'?'Easy, conversational':'Long trail'}</div><h3>${k==='run'?'Easy run':'Trail run or hike'}</h3></div></div><div class="links">${ytLink(k==='run'?'easy zone 2 running form':'trail running technique')}</div>
+ if(k==='run'||k==='run2'||k==='long'){title.textContent=WEEK[SLOT[k]].n;intro.textContent=k==='long'?longFor(w):RUN[p];
+  list.innerHTML=`<div class="card ex"><div class="exhead"><span class="thumb">${ICON_RUN}</span><div><div class="eyebrow">${k==='long'?'Long trail':'Easy, conversational'}</div><h3>${k==='long'?'Trail run or hike':'Easy run'}</h3></div></div><div class="links">${ytLink(k==='long'?'trail running technique':'easy zone 2 running form')}</div>
   <div class="grid2" style="margin-top:10px"><div class="field"><label>Minutes</label><input id="runMin" type="number" inputmode="numeric"></div><div class="field"><label>Distance km</label><input id="runKm" type="text" inputmode="decimal"></div></div></div>`;return}
  const S=curS=buildSession(k),dr=draftFor(k);
  // Ticked sets never vanish: if a swap, a shorter time or different equipment dropped an exercise that already has ticked sets, keep its row.
@@ -493,7 +516,7 @@ function completeWorkout(){
  if(k.length===1&&dr?.started&&!dr.keep&&dv===today){const mins=Math.round((Date.now()-dr.started)/6e4);if(mins>=3&&mins<240)s.dur=mins}
  if(dr?.keep)Object.assign(s,dr.keep);
  let prs=[];
- if(k==='run'||k==='long'){s.min=document.getElementById('runMin').value;s.km=dec(document.getElementById('runKm').value)}
+ if(k==='run'||k==='run2'||k==='long'){s.min=document.getElementById('runMin').value;s.km=dec(document.getElementById('runKm').value)}
  else document.querySelectorAll('#exList .ex').forEach((el,i)=>{const name=el.dataset.name,e=LIB.find(x=>x.name===name),before=bestOf(name,e.load);const arr=[...el.querySelectorAll('input[type=checkbox]')].map((c,j)=>({kg:dec(document.getElementById(`w${i}s${j}`).value),reps:document.getElementById(`r${i}s${j}`).value,done:c.checked})).filter(x=>x.done);
   if(arr.length){s.sets[name]=arr;s.pats[el.dataset.pat]=arr.length;const now=Math.max(...arr.map(x=>e.load==='kg'?e1rm(+x.kg||0,+x.reps||0):(+x.reps||0)));if(before>0&&now>before)prs.push(name)}});
  if(!s.min&&!Object.keys(s.sets).length&&!confirm('No sets ticked. Log the session anyway?'))return;
@@ -519,7 +542,7 @@ function openEx(i){const r=curS?.rows[i];if(!r)return;const e=r.e,k=woKey,ov=dat
  <div class="links">${ytLink(e.demo,'▶ Watch a full demo')}</div>
  ${alts.length?`<div class="eyebrow" style="margin-top:14px">Swap for</div><div class="swaplist">${alts.map(o=>`<button class="swapopt" onclick="closeSheet();swap('${k}','${r.pat}','${o.name.replace(/'/g,"\\'")}')">${thumb(o)}<span>${esc(o.name)}<br><small>${o.eq.length?o.eq.map(q=>EQUIP[q]).join(', '):'Bodyweight'}</small></span></button>`).join('')}</div>`:''}`)}
 // Minutes since the first logged set, in the sticky session bar.
-function elapsedTick(){const el=document.getElementById('woElapsed');if(!el||!woKey)return;const d=draftFor(woKey);if(woKey==='off'){el.textContent='Nothing queued';return}if(!d||!d.started){el.textContent='Not started';return}const t=Math.floor((Date.now()-d.started)/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),sec=t%60;el.textContent=(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(sec).padStart(2,'0')+' elapsed'}
+function elapsedTick(){const el=document.getElementById('woElapsed');if(!el||!woKey)return;const d=draftFor(woKey);if(woKey==='off'){el.className='eyebrow';el.textContent='Nothing queued';return}if(!d||!d.started){el.className='eyebrow';el.textContent='Not started · tick a set, or use Start on Today';return}const t=Math.floor((Date.now()-d.started)/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),sec=t%60;el.className='clock';el.innerHTML=(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(sec).padStart(2,'0')+'<small>elapsed</small>'}
 // ---- Garmin runs via intervals.icu (netlify/functions/runs.mjs) ----
 const paceStr=sec=>`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
 // Pulls runs since a week before the block start. A run on a day you logged by hand is matched to that entry (numbers filled in); otherwise it becomes a run or long-trail session and ticks the week.
@@ -531,8 +554,8 @@ async function syncRuns(manual){
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?'Token rejected — it must match REBUILD_TOKEN in Netlify.':r.status===503?'Not set up on Netlify yet (INTERVALS_API_KEY), or the site needs a redeploy.':r.status===404?'The sync function isn’t deployed on this site.':(e.error||'Sync failed')+' ('+r.status+').')}
   const {runs=[]}=await r.json();let added=0,updated=0;
   runs.forEach(a=>{const d=new Date(a.date);if(isNaN(d)||data.sessions.some(x=>x.icuId===a.id))return;const day=localYmd(d);
-   const key=(dow(d)>=5||a.km>=10||a.min>=70)?'long':'run';
-   const same=data.sessions.find(x=>!x.icuId&&(x.key==='run'||x.key==='long')&&localYmd(new Date(x.date))===day);
+   const key=(dow(d)>=5||a.km>=10||a.min>=70)?'long':(data.thuRun&&dow(d)===3?'run2':'run');
+   const same=data.sessions.find(x=>!x.icuId&&/run|long/.test(x.key)&&localYmd(new Date(x.date))===day);
    const fields={min:String(a.min),km:String(a.km),up:a.up,hr:a.hr,pace:a.pace,load:a.load,src:'garmin',icuId:a.id,act:a.name};
    if(same){Object.assign(same,fields);updated++}else{data.sessions.push({date:d.toISOString(),key,weekday:SLOT[key],name:WEEK[SLOT[key]].n,week:weekNo(d),time:'',sets:{},pats:{},...fields});added++}});
   data.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);data.icuLast=Date.now();save();
@@ -548,6 +571,10 @@ function openHeadache(){sheet(`<div class="eyebrow">Headache</div><h2>Log a head
  <button class="primary big" style="margin-top:12px" onclick="saveHeadache()">Log headache</button>
  <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div>`);setTimeout(()=>document.getElementById('haInt')?.focus(),60)}
 function delHeadache(i){if(!confirm('Delete this headache entry?'))return;data.headaches.splice(i,1);save();renderProgress();render()}
+// End a started session without logging anything: drops the draft and the clock.
+function discardSession(){const k=woKey||currentKey();if(k==='off')return;if(!confirm('Discard this session? Nothing will be logged.'))return;delete data.drafts[k];data.pick=null;save();timerStop();show('today');toast('Session discarded.')}
+// ---- daily habits ----
+function toggleDaily(n){const day=localYmd(),arr=data.dailyLog[day]||[];const i=arr.indexOf(n);if(i<0)arr.push(n);else arr.splice(i,1);data.dailyLog[day]=arr;save();render()}
 // ---- rest timer ----
 let tEnd=0,tInt=null;
 let tTotal=0;
@@ -617,14 +644,15 @@ function clearKey(){data.apiKey='';document.getElementById('apiKey').value='';sa
 function makeReport(){
  const m=new Date((document.getElementById('repWeek').value||localYmd(monday(new Date())))+'T00:00'),cur=+m===+monday(new Date()),w=weekNo(m),ss=data.sessions.filter(s=>inWeek(s.date,m)),ws=data.weights.filter(x=>inWeek(x.date,m)),ha=data.headaches.filter(x=>inWeek(x.date,m));
  const v=id=>document.getElementById(id).value||'—',trav=ss.some(s=>s.travel)||(cur&&data.travel);
- let L=[`REBUILD WEEKLY REPORT`,`Week ${w} of 12, phase ${phase(w)}, ${fmt(m)} – ${fmt(new Date(m.getTime()+6*864e5))}${trav?' (travel week)':''}`,`Equipment: ${data.equip.map(q=>EQUIP[q]).join(', ')||'bodyweight'} · streak ${streak()} wk`,``,`SESSIONS ${ss.length}/${trav?3:5}`];
+ let L=[`REBUILD WEEKLY REPORT`,`Week ${w} of 12, phase ${phase(w)}, ${fmt(m)} – ${fmt(new Date(m.getTime()+6*864e5))}${trav?' (travel week)':''}`,`Equipment: ${data.equip.map(q=>EQUIP[q]).join(', ')||'bodyweight'} · streak ${streak()} wk`,``,`SESSIONS ${ss.filter(x=>x.key!=='run2').length}/${trav?3:5}${ss.some(x=>x.key==='run2')?' + optional Thu run':''}`];
  ss.forEach(s=>{L.push(`${DAYS[dow(new Date(s.date))]} ${s.name}${s.time&&s.key.length===1?` (${s.time} min plan${s.dur?', took '+s.dur:''})`:''}${s.min?` ${s.min} min${s.km?', '+s.km+' km':''}${s.up?', '+s.up+' m↑':''}${s.pace?', '+paceStr(s.pace)+'/km':''}${s.hr?', HR '+s.hr:''}${s.src==='garmin'?' [Garmin]':''}`:''}${s.feel?` felt ${s.feel}`:''}${s.rpe?` RPE ${s.rpe}`:''}${s.note?' — '+s.note:''}`);
   Object.entries(s.sets||{}).forEach(([n,a])=>{const u=LIB.find(e=>e.name===n)?.load==='time'?' s':'',f=a=>a.map(x=>`${x.kg?x.kg+'×':''}${x.reps||'?'}${u}`).join(', '),prev=history(n).filter(h=>h.date<s.date).at(-1);L.push(`  ${n}: ${f(a)} (${prev?'prev '+f(prev.sets):'first time'})`)})});
  const b=balance(m);L.push(``,`HARD SETS push ${b.push} · pull ${b.pull} · squat/lunge ${b.sq} · hinge ${b.hg}`);
+ if(data.daily.length){const cnt=n=>{let c=0;for(let i=0;i<7;i++){const d=new Date(m);d.setDate(d.getDate()+i);if((data.dailyLog[localYmd(d)]||[]).includes(n))c++}return c};L.push(``,`DAILY ${data.daily.map(n=>`${n} ${cnt(n)}/7`).join(' · ')}`)}
  L.push(``,`BODYWEIGHT ${ws.length?ws.map(x=>x.v).join(', ')+' kg':'not logged'}`);
  // Up to four weeks ending with this one, so the coach sees direction without the old reports.
  const wk=[];for(let i=3;i>=0;i--){const x=new Date(m);x.setDate(x.getDate()-7*i);if(x>=monday(data.start+'T00:00'))wk.push(x)}
- if(wk.length>1)L.push(``,`TREND wk ${weekNo(wk[0])}–${w}: sessions ${wk.map(x=>doneKeys(x).size).join(' → ')} · avg kg ${wk.map(x=>{const a=data.weights.filter(y=>inWeek(y.date,x)).map(y=>y.v);return a.length?(a.reduce((p,c)=>p+c,0)/a.length).toFixed(1):'—'}).join(' → ')}`);
+ if(wk.length>1)L.push(``,`TREND wk ${weekNo(wk[0])}–${w}: sessions ${wk.map(x=>reqDone(doneKeys(x))).join(' → ')} · avg kg ${wk.map(x=>{const a=data.weights.filter(y=>inWeek(y.date,x)).map(y=>y.v);return a.length?(a.reduce((p,c)=>p+c,0)/a.length).toFixed(1):'—'}).join(' → ')}`);
  L.push(``,`RECOVERY energy ${v('energy')}, sleep ${v('sleep')}, soreness ${v('soreness')}, travel days ${v('travelDays')}`,``,`HEADACHES ${ha.length}${ha.length?': '+ha.map(x=>{const d=new Date(x.date),same=data.sessions.filter(s=>localYmd(new Date(s.date))===localYmd(d)).map(s=>s.name+(s.rpe?' RPE '+s.rpe:'')).join(' + ');return `${DAYS[dow(d)]} ${x.i}/10 ${x.h||'?'}h ${x.n||''}${same?` [same day: ${same}]`:''}`}).join('; '):''}`,``,`NOTES ${v('notes')}`);
  if(data.brief)L.push(``,...coachBrief(w));
  document.getElementById('reportText').value=L.join('\n');if(!data.reports.includes(ymd(m)))data.reports.push(ymd(m));save();
@@ -632,7 +660,7 @@ function makeReport(){
 // The REBUILD_UPDATE spec + current line-up + the exact names the coach may use. Shared by the pasted brief and the in-app coach's system prompt.
 function updateSpec(w){
  const ok=e=>e.eq.every(q=>data.equip.includes(q)),line=k=>patsFor(k,phase(w)).map(p=>chosen(p,k)?.main.name).filter(Boolean).join(' | ');
- return ['REBUILD_UPDATE','SET: <exact exercise name> = <new target text>','CUE: <exact exercise name> = <one short form cue, shown while I lift>','CLEAR: <exact exercise name>   (removes its SET and CUE)','SWAP: <A|B|C>/<pattern> = <exact exercise name>','TRAVEL: on|off','REST: <seconds>','NOTE: <a few lines for my Today screen; everything after NOTE: is the note>','END_REBUILD_UPDATE',
+ return ['REBUILD_UPDATE','SET: <exact exercise name> = <new target text>','CUE: <exact exercise name> = <one short form cue, shown while I lift>','CLEAR: <exact exercise name>   (removes its SET and CUE)','SWAP: <A|B|C>/<pattern> = <exact exercise name>','TRAVEL: on|off','REST: <seconds>','DAILY: <habit | habit | habit>   (the tap-to-tick chips on Today; "off" hides them)','NOTE: <a few lines for my Today screen; everything after NOTE: is the note>','END_REBUILD_UPDATE',
   'Line-up now:',...['A','B','C'].map(k=>`${k}: ${line(k)}`),'Exercises I can do with this equipment (pattern: exact names):',...Object.keys(PATN).map(p=>{const a=LIB.filter(e=>e.pat===p&&ok(e));return a.length?`${p}: ${a.map(e=>e.name).join(' | ')}`:''}).filter(Boolean)];
 }
 const progSummary=()=>`12 weeks: phase 1 (wk 1–2) ${PHASES[0]}, phase 2 (wk 3–6) ${PHASES[1]}, phase 3 (wk 7–12) ${PHASES[2]}. Each week: strength A, B, C + easy run + long trail; travel weeks drop to three sessions.`;
@@ -686,7 +714,8 @@ function importUpdate(){
   else if(m=l.match(/^CLEAR:\s*(.+)$/i)){if(c=canon(m[1])){delete data.overrides[c];delete data.cues[c];n++}else bad.push(l)}
   else if(m=l.match(/^SWAP:\s*([ABC])\s*\/\s*(\w+)\s*=\s*(.+)$/i)){c=canon(m[3]);const p=m[2].toLowerCase();if(c&&LIB.some(e=>e.name===c&&e.pat===p)){data.swaps[m[1].toUpperCase()+':'+p]=c;n++}else bad.push(l)}
   else if(m=l.match(/^TRAVEL:\s*(on|off)/i)){data.travel=m[1].toLowerCase()==='on';n++}
-  else if(m=l.match(/^REST:\s*(\d+)/i)){data.rest=Math.max(30,+m[1]);n++}});
+  else if(m=l.match(/^REST:\s*(\d+)/i)){data.rest=Math.max(30,+m[1]);n++}
+  else if(m=l.match(/^DAILY: *(.+)$/i)){const v=m[1].trim();data.daily=/^off$/i.test(v)?[]:v.split('|').map(x=>x.trim()).filter(Boolean).slice(0,6);n++}});
  const note=at<0?'':lines.slice(at).join('\n').replace(/^NOTE:\s*/i,'').split(/\n[^\n]*END_REBUILD_UPDATE/i)[0].replace(/[`\s]+$/,'').trim();if(note){data.coachNote=note;data.coachDate=fmt(new Date())}
  save();msg.innerHTML=`Applied ${n} change${n===1?'':'s'}${note?' and a coach note':''}.`+(bad.length?`<div class="notice">Skipped ${bad.length}: no exercise (or pattern) matches. Ask the coach for the exact name, fix the line in the box and Apply again.<br>${bad.map(esc).join('<br>')}</div>`:'');
  document.getElementById('updateText').value=bad.join('\n')&&'REBUILD_UPDATE\n'+bad.join('\n')+'\nEND_REBUILD_UPDATE';render();
@@ -704,7 +733,7 @@ async function shareBackup(){try{await navigator.share({files:[new File([backupT
 function importDataFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(p.app!=='REBUILD')throw 0;if(!confirm('Replace data on this device?'))return;data=p.data;for(const k in D)if(data[k]===undefined)data[k]=D[k];save();location.reload()}catch(x){toast('Not a REBUILD backup.')}};r.readAsText(f);e.target.value=''}
 // migrate v3 data if present
 try{const old=localStorage.getItem('rebuild_v3');if(old&&!data.sessions.length){const o=JSON.parse(old);data.sessions=(o.sessions||[]).map(s=>({...s,key:s.key||['A','run','B','off','C','long','plan'][s.weekday]}));data.weights=o.weights||[];data.headaches=o.headaches||[];data.start=o.start||data.start;save()}}catch(e){}
-applyTheme();
+applyTheme();applyThu();
 matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',()=>{if(data.theme==='auto')applyTheme()});
 wireEntry();
 ['input','change'].forEach(ev=>document.getElementById('workout').addEventListener(ev,captureDraft));

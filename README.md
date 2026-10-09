@@ -42,14 +42,22 @@ Patterns in priority order — the first ones survive a short session:
 - **B (upper, pull first):** horizontal pull, horizontal push, vertical pull, vertical push, rear delts, side delts, core
 - **C (full body):** lunge, step-up, horizontal push, hinge, power, core, anti-lateral core (phase 3: squat, lunge, step, hinge, push, core at 4 sets)
 
+Settings → Programme has an **optional Thursday easy run** (off by default): it appears on the week strip and in the calendar export, Garmin runs on a Thursday map to it, and it never counts toward the five-session target or the block adherence figure.
+
 Accessories (`rear`, `delt`, `core`, `calf`, `lateral`) are capped at 3 sets and 60 s rest; the rest timer uses each exercise's own rest. The time budget tolerates a 90-second overrun so a session's last accessory isn't dropped for a minute.
 
 ## Settings
 
 - **Appearance** — theme: Match my phone (default) / Light / Dark. Dark mode follows the OS unless forced.
+- **Colour scheme** — Electric (default), Forest, Ember, Teal, Graphite; each has its own light and dark steps (PALETTES in index.html).
+- **Session screen** — Start on Today starts a live clock in the sticky bar; Finish logs the duration; **Discard without saving** drops a started session.
 - **Equipment set-ups** — named presets (Full gym / Home / Hotel seeded). Tap one to load its kit; "Save current" stores the ticked kit under a name.
 - **Add this week to calendar** — downloads a `.ics` with the week's sessions at 06:00 and a 1-hour reminder (floating local time). Re-import after a coach update if the plan changed.
 - **In-app coach (optional)** — paste your own Anthropic API key to get the coach's reply inside the app (see below). The key is stored only on this phone, is sent only to `api.anthropic.com`, and is **excluded from backups**.
+
+## Daily habits
+
+Today has a **Daily** card of tap-to-tick habits (default: posture drill, mobility, walk) for things that happen at other times than the session. Ticks are stored per day, the card shows this week's tally, and the Sunday report carries a `DAILY` line. The coach can change the list with a `DAILY:` directive.
 
 ## Progress
 
@@ -79,6 +87,7 @@ CUE: Goblet squat, 3 s down = Elbows inside knees  (form cue shown under the exe
 CLEAR: Goblet squat, 3 s down                    (removes that exercise's SET and CUE)
 SWAP: A/hinge = Staggered-stance dumbbell RDL    (session A|B|C / pattern = exercise)
 TRAVEL: on                                       (on|off — three-session week)
+DAILY: Posture drill · 2 min | Mobility · 10 min | Walk   (the tap-to-tick habit chips on Today; "off" hides the card)
 REST: 75                                         (default rest, seconds)
 NOTE: Free text for the Today screen. Everything after NOTE: is the note, up to END_REBUILD_UPDATE.
 END_REBUILD_UPDATE
