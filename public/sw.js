@@ -1,5 +1,5 @@
 // Bump CACHE whenever index.html changes, or phones keep the old version.
-const CACHE='rebuild-v20';
+const CACHE='rebuild-v21';
 const IMG='rebuild-img-v1'; // exercise demo frames; survives app-shell bumps
 const FILES=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)))});

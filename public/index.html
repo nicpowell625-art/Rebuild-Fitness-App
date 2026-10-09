@@ -113,10 +113,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="tiles"><div class="tile"><b id="wkDone">0/5</b><span>This week</span></div><div class="tile"><b id="weekNo">1</b><span>Week of 12</span></div><div class="tile"><b id="streak">0</b><span>Streak</span></div><div class="tile"><b id="bwNow">—</b><span>kg</span></div></div>
   <div class="card" id="dailyCard"></div>
   <div class="card hidden" id="doneCard"></div>
+  <div class="card hidden nudge" id="photoCard"></div>
   <div class="card nudge" id="sundayCard"></div>
   <div class="card" id="coachCard"></div>
   <div class="card"><div class="cardhead"><h2>This week</h2></div><div class="week" id="weekStrip"></div><p class="small muted" id="weekNote"></p></div>
-  <div class="card"><div class="cardhead"><h2>Bodyweight</h2></div><div class="row"><input id="bw" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="Today, kg" onkeydown="if(event.key==='Enter'){saveWeight();this.blur()}"><button class="primary" onclick="saveWeight()">Save</button></div></div>
+  <div class="card"><div class="cardhead"><h2>Body</h2><span class="small muted" id="bodyLast"></span></div><div class="row"><input id="bw" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="kg" onkeydown="if(event.key==='Enter'){saveBody();this.blur()}"><input id="waist" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="Waist, cm" onkeydown="if(event.key==='Enter'){saveBody();this.blur()}"><button class="primary" onclick="saveBody()">Save</button></div><p class="small muted" style="margin:6px 0 0">Waist at the navel, relaxed, same time of day. The honest measure for this block.</p></div>
   <div class="card"><div class="cardhead"><h2>Headache</h2><button class="secondary" onclick="openHeadache()">Log one</button></div><p class="small muted" id="haSummary" style="margin:0"></p></div>
 </section>
 
@@ -144,7 +145,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="card"><div class="cardhead"><h2>Sessions by week</h2></div><div class="tick" id="tickGrid"></div></div>
   <div class="card"><div class="cardhead"><h2>Balance this week</h2></div><p class="small muted" style="margin-top:0">Hard sets per pattern. Push and pull should roughly match; hinge and squat too.</p><div id="balance" class="small"></div></div>
   <div class="card"><div class="cardhead"><h2>Personal bests</h2></div><p class="small muted" style="margin-top:0">Best estimated 1RM (Epley) and best carry or hold. The line is your best set each session.</p><div id="prs" class="small"></div></div>
-  <div class="card"><div class="cardhead"><h2>Bodyweight</h2></div><div id="weights" class="small"></div></div>
+  <div class="card"><div class="cardhead"><h2>Body</h2></div><div id="weights" class="small"></div></div>
+  <div class="card hidden" id="wellCard"></div>
   <div class="card hidden" id="haCard"></div>
   <div class="card"><div class="cardhead"><h2>Recent sessions</h2></div><p class="small muted" style="margin-top:0">Typo? Reopen puts a session back on the Session screen to fix and finish again.</p><div id="sessLog" class="small"></div></div>
 </section>
@@ -205,7 +207,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="links" style="margin-top:8px"><button class="primary" onclick="saveToken()">Save token</button><button onclick="cloudBackup(true)">Back up now</button><button onclick="cloudRestore()">Restore from cloud</button></div><div id="cloudMsg" class="small muted" style="margin:6px 0 10px"></div>
     <div class="eyebrow">On this phone</div><div class="links" style="margin-top:4px"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.5 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.6 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -310,7 +312,7 @@ const reqDone=set=>[...set].filter(k=>k!=='run2').length;
 const WARM='Warm-up 8 min: the mobility routine, then one easy wake-up round. Open it below. Stretch at the end of the session.';
 
 let data=JSON.parse(localStorage.getItem(KEY)||'{}');
-const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0,cloud:false,cloudLast:0,dbSet:[],icuIgnore:[],thuRun:false,palette:'electric',daily:['Posture drill · 2 min','Mobility · 10 min','Walk'],dailyLog:{}};
+const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0,cloud:false,cloudLast:0,dbSet:[],icuIgnore:[],waists:[],photos:{},wellness:{},thuRun:false,palette:'electric',daily:['Posture drill · 2 min','Mobility · 10 min','Walk'],dailyLog:{}};
 for(const k in D)if(data[k]===undefined)data[k]=D[k];
 let dirty=false;function save(){localStorage.setItem(KEY,JSON.stringify(data));dirty=true}function saveQuiet(){localStorage.setItem(KEY,JSON.stringify(data))}
 const WEEKS=12; // programme length; sessions past this roll into a maintenance state
@@ -395,6 +397,8 @@ function render(){applyTheme();
  {const dc=document.getElementById('dailyCard'),today=localYmd(),dn=new Set(data.dailyLog[today]||[]),m0=monday(new Date());dc.classList.toggle('hidden',!data.daily.length);
   const cnt=n=>{let c=0;for(let i=0;i<7;i++){const d=new Date(m0);d.setDate(d.getDate()+i);if((data.dailyLog[localYmd(d)]||[]).includes(n))c++}return c};
   dc.innerHTML=`<div class="cardhead"><h2>Daily</h2><span class="small muted">tap when done</span></div><div class="links" style="margin-top:4px">${data.daily.map(n=>`<button class="${dn.has(n)?'on':''}" onclick="toggleDaily(${JSON.stringify(n).replace(/"/g,'&quot;')})">${dn.has(n)?'✓ ':''}${esc(n)}</button>`).join('')}</div><div class="links" style="margin-top:6px"><button onclick="openMobility()">▶ Mobility routine · ~8 min</button></div><p class="small muted" style="margin:8px 0 0">This week: ${data.daily.map(n=>`${esc(n.split(' · ')[0])} ${cnt(n)}/7`).join(' · ')}</p>`}
+ {const lw=data.weights.at(-1),lc=data.waists.at(-1);document.getElementById('bodyLast').textContent=[lw?`${lw.v} kg ${fmt(new Date(lw.date))}`:'',lc?`${lc.v} cm ${fmt(new Date(lc.date))}`:''].filter(Boolean).join(' · ')}
+ {const pw=photoWeek(),pc=document.getElementById('photoCard'),show=pw&&dow(new Date())>=5&&!data.photos[pw];pc.classList.toggle('hidden',!show);if(show)pc.innerHTML=`<h2>Photo day · week ${pw}</h2><p>The same three photos — back, side, front — same spot, same light, same time of day. Waist at the navel into the Body card. Send them with Sunday’s report.</p><button class="primary" onclick="photoDone()">Done</button>`}
  const cc=document.getElementById('coachCard');cc.classList.toggle('hidden',!data.coachNote);cc.innerHTML=`<h2>Coach note</h2><p style="white-space:pre-line">${esc(data.coachNote)}</p><p class="small muted">Applied ${esc(data.coachDate)}</p>`;
  // Nudges: this week's report on Sunday, last week's until Wednesday if it never went, and a stale backup.
  const due=dow(new Date())===6&&!data.reports.includes(ymd(monday(new Date()))),late=lastDue(),stale=data.sessions.length>=3&&Date.now()-data.lastBackup>14*864e5;
@@ -441,11 +445,11 @@ function blockStats(){
  let done=0,target=0,strength=0,km=0;
  for(let w=1;w<=WEEKS;w++){const m=wk(w),trav=data.sessions.some(x=>inWeek(x.date,m)&&x.travel);target+=trav?3:5;done+=reqDone(doneKeys(m))}
  data.sessions.filter(inBlock).forEach(x=>{if(x.key&&x.key.length===1)strength++;km+=parseFloat(x.km)||0});
- const bw=data.weights.filter(inBlock),bwDelta=bw.length>1?bw.at(-1).v-bw[0].v:null;
+ const bw=data.weights.filter(inBlock),bwDelta=bw.length>1?bw.at(-1).v-bw[0].v:null;const wa=data.waists.filter(inBlock),waDelta=wa.length>1?wa.at(-1).v-wa[0].v:null;
  // A PR is an exercise whose best set now beats its very first logged set this block.
  let prs=0;const names=new Set();data.sessions.filter(inBlock).forEach(x=>Object.keys(x.sets||{}).forEach(n=>names.add(n)));
  names.forEach(n=>{const e=LIB.find(x=>x.name===n)||{load:'bw'},h=history(n).filter(inBlock);if(h.length<2)return;const best=a=>Math.max(...a.map(st=>e.load==='kg'?e1rm(+st.kg||0,+st.reps||0):(+st.reps||0)));if(best(h.at(-1).sets)>best(h[0].sets))prs++});
- return {done,target,pct:target?Math.round(done/target*100):0,strength,km:Math.round(km),bwDelta,prs}
+ return {done,target,pct:target?Math.round(done/target*100):0,strength,km:Math.round(km),bwDelta,waDelta,prs}
 }
 let view='today';
 function show(id){closeSheet();document.getElementById('backWo').classList.toggle('hidden',!(id==='settings'&&view==='workout'));view=id;['today','workout','progress','report','settings'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));['Today','Workout','Progress','Report'].forEach(x=>document.getElementById('n'+x).classList.toggle('active',x.toLowerCase()===id));if(id==='workout')renderWorkout();if(id==='progress')renderProgress();if(id==='report')renderReport();if(id==='today')render();window.scrollTo(0,0)}
@@ -508,7 +512,7 @@ function wireEntry(){const list=document.getElementById('exList');
  list.addEventListener('change',ev=>{const t=ev.target;if(t.type!=='checkbox')return;sessionProgress();const ex=t.closest('.ex');if(!t.checked||!ex.classList.contains('alldone'))return;
   const next=[...document.querySelectorAll('#exList .ex')].find(el=>!el.classList.contains('alldone')&&(ex.compareDocumentPosition(el)&4));setTimeout(()=>(next||document.getElementById('woRpe')).scrollIntoView({behavior:'smooth',block:next?'start':'center'}),450)});
  // Tapping a prefilled number selects it, so typing replaces instead of appending.
- document.addEventListener('focusin',ev=>{const t=ev.target;if(t.matches&&t.matches('#exList input:not([type=checkbox]),#bw,#woRpe,#runMin,#runKm'))setTimeout(()=>{try{t.select()}catch(e){}},0)});
+ document.addEventListener('focusin',ev=>{const t=ev.target;if(t.matches&&t.matches('#exList input:not([type=checkbox]),#bw,#waist,#woRpe,#runMin,#runKm'))setTimeout(()=>{try{t.select()}catch(e){}},0)});
 }
 function swap(k,pat,name){data.swaps[k+':'+pat]=name;save();renderWorkout()}
 function setTime(v){data.time=v;save();drawTimeSeg();renderWorkout()}
@@ -563,7 +567,7 @@ async function syncRuns(manual){
    const same=data.sessions.find(x=>!x.icuId&&/run|long/.test(x.key)&&localYmd(new Date(x.date))===day);
    const fields={min:String(a.min),km:String(a.km),up:a.up,hr:a.hr,pace:a.pace,load:a.load,src:'garmin',icuId:a.id,act:a.name};
    if(same){Object.assign(same,fields);updated++}else{data.sessions.push({date:d.toISOString(),key,weekday:SLOT[key],name:WEEK[SLOT[key]].n,week:weekNo(d),time:'',sets:{},pats:{},...fields});added++}});
-  data.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);data.icuLast=Date.now();save();
+  await syncWellness();data.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);data.icuLast=Date.now();save();
   if(msg)msg.textContent=`Synced ${fmt(new Date())}: ${runs.length} run${runs.length===1?'':'s'} found, ${added} added, ${updated} matched to entries you logged.`;
   if(added||updated)toast(`Garmin: ${added} run${added===1?'':'s'} added${updated?', '+updated+' updated':''}.`);
   if(view==='today')render();if(view==='progress')renderProgress();
@@ -678,13 +682,29 @@ async function wake(on){try{
 }catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(tInt)wake(true);if(data.garmin&&navigator.onLine&&Date.now()-(data.icuLast||0)>6*36e5)syncRuns()});
 // ---- progress ----
-function saveWeight(){const v=parseFloat(dec(document.getElementById('bw').value));if(isNaN(v))toast('Enter your weight in kg, e.g. 82.5');else{data.weights.push({date:new Date().toISOString(),v});document.getElementById('bw').value='';save();render()}}
+// ---- body: weight and waist in one go ----
+function saveBody(){const w=parseFloat(dec(document.getElementById('bw').value)),c=parseFloat(dec(document.getElementById('waist').value));
+ if(isNaN(w)&&isNaN(c)){toast('Enter kg, waist in cm, or both.');return}const now=new Date().toISOString();
+ if(!isNaN(w))data.weights.push({date:now,v:w});if(!isNaN(c))data.waists.push({date:now,v:c});
+ document.getElementById('bw').value='';document.getElementById('waist').value='';save();render();toast('Logged: '+[!isNaN(w)?w+' kg':'',!isNaN(c)?c+' cm':''].filter(Boolean).join(' · '))}
+const saveWeight=saveBody;
+// Photo weeks: the end of weeks 4, 8 and 12 (Sat/Sun). Done is remembered per week so the nudge disappears.
+function photoWeek(){const w=weekNo();return w<=WEEKS&&[4,8,12].includes(w)?w:0}
+function photoDone(){const w=photoWeek();if(w){data.photos[w]=localYmd();save();render();toast('Photos done for week '+w+'. Send them with the report.')}}
+// ---- Garmin wellness via intervals.icu: resting HR, HRV, sleep, steps per day ----
+async function syncWellness(){try{const since=new Date();since.setDate(since.getDate()-35);
+ const r=await fetch(`/api/wellness?since=${localYmd(since)}${data.icuToken?'&t='+encodeURIComponent(data.icuToken):''}`,{cache:'no-store'});if(!r.ok)return;
+ const {days=[]}=await r.json();days.forEach(d=>{data.wellness[d.date]={rhr:d.rhr,hrv:d.hrv,sleep:d.sleep,score:d.score,steps:d.steps}});
+ const cut=new Date();cut.setDate(cut.getDate()-120);const c=localYmd(cut);Object.keys(data.wellness).forEach(k=>{if(k<c)delete data.wellness[k]})}catch(e){}}
+// Averages for the 7 days from Monday m; null fields are skipped.
+function wellWeek(m){const out={rhr:[],hrv:[],sleep:[],steps:[]};for(let i=0;i<7;i++){const d=new Date(m);d.setDate(d.getDate()+i);const w=data.wellness[localYmd(d)];if(!w)continue;for(const k in out)if(w[k]!=null)out[k].push(w[k])}
+ const avg=a=>a.length?a.reduce((p,c)=>p+c,0)/a.length:null;return {rhr:avg(out.rhr),hrv:avg(out.hrv),sleep:avg(out.sleep),steps:avg(out.steps),n:out.rhr.length||out.sleep.length}}
 function renderProgress(){
  const bs=blockStats(),bc=document.getElementById('blockCard');
  bc.classList.toggle('hidden',bs.done===0);
  bc.innerHTML=`<h2>This block</h2><p class="small muted">Weeks 1–${WEEKS} from ${fmt(monday(data.start+'T00:00'))}.</p>
   <div class="grid2" style="margin-top:6px"><div><b style="font-size:22px">${bs.done}/${bs.target}</b><br><span class="small muted">sessions · ${bs.pct}%</span></div><div><b style="font-size:22px">${bs.prs}</b><br><span class="small muted">personal bests</span></div>
-  <div><b style="font-size:22px">${bs.km||'—'}</b><br><span class="small muted">km run</span></div><div><b style="font-size:22px">${bs.bwDelta==null?'—':(bs.bwDelta<0?'−':'+')+Math.abs(bs.bwDelta).toFixed(1)}</b><br><span class="small muted">kg bodyweight</span></div></div>
+  <div><b style="font-size:22px">${bs.km||'—'}</b><br><span class="small muted">km run</span></div><div><b style="font-size:22px">${bs.bwDelta==null?'—':(bs.bwDelta<0?'−':'+')+Math.abs(bs.bwDelta).toFixed(1)}</b><br><span class="small muted">kg bodyweight</span></div><div><b style="font-size:22px">${bs.waDelta==null?'—':(bs.waDelta<0?'−':'+')+Math.abs(bs.waDelta).toFixed(1)}</b><br><span class="small muted">cm waist</span></div></div>
   <div class="bar" style="margin-top:12px"><i style="width:${Math.min(bs.pct,100)}%"></i></div>`;
  let h='<div></div>'+['A','Run','B','C','Long'].map(x=>`<div class="muted">${x}</div>`).join('');
  // Week from the date against the current start, so a changed start date re-buckets old sessions (and drops those before it) instead of trusting the week stored at log time.
@@ -701,6 +721,8 @@ function renderProgress(){
  const ws=data.weights.slice(-30),wv=ws.map(x=>x.v),dl=ws.length>1?wv.at(-1)-wv[0]:0;
  document.getElementById('weights').innerHTML=ws.length?`<div class="trend"><div><b>${wv.at(-1)} kg</b>${ws.length>1?` <span class="muted">· ${dl<0?'−':'+'}${Math.abs(dl).toFixed(1)} kg since ${fmt(new Date(ws[0].date))}</span>`:''}</div>${spark(wv,`Bodyweight: ${wv[0]} to ${wv.at(-1)} kg`)}</div>`+ws.slice(-14).map(x=>`${fmt(new Date(x.date))}: <b>${x.v} kg</b>`).join('<br>'):'<span class="muted">No entries yet.</span>';
  {const hc=document.getElementById('haCard');hc.classList.toggle('hidden',!data.headaches.length);hc.innerHTML=`<div class="cardhead"><h2>Headaches</h2><span class="small muted">${data.headaches.length} logged</span></div>`+data.headaches.map((x,i)=>[x,i]).slice(-6).reverse().map(([x,i])=>`<div class="hist"><div><b>${DAYS[dow(new Date(x.date))]} ${fmt(new Date(x.date))}</b> · ${x.i}/10${x.h?' · '+esc(x.h)+' h':''}<br><span class="muted">${esc(x.n||'—')}</span></div><button onclick="delHeadache(${i})">Delete</button></div>`).join('')}
+ {const wa=data.waists.slice(-30),wv=wa.map(x=>x.v),dw=wa.length>1?wv.at(-1)-wv[0]:0;if(wa.length)document.getElementById('weights').innerHTML+=`<div class="trend" style="margin-top:6px"><div><b>${wv.at(-1)} cm</b> waist${wa.length>1?` <span class="muted">· ${dw<0?'−':'+'}${Math.abs(dw).toFixed(1)} cm since ${fmt(new Date(wa[0].date))}</span>`:''}</div>${spark(wv,`Waist: ${wv[0]} to ${wv.at(-1)} cm`)}</div>`}
+ {const wc=document.getElementById('wellCard'),keys=Object.keys(data.wellness).sort();wc.classList.toggle('hidden',!keys.length);if(keys.length){const last7=keys.slice(-7).reverse(),rh=keys.slice(-28).map(k=>data.wellness[k].rhr).filter(v=>v!=null);wc.innerHTML=`<div class="cardhead"><h2>Recovery</h2><span class="small muted">Garmin, via intervals.icu</span></div>${rh.length>1?`<div class="trend"><div><b>${rh.at(-1)} bpm</b> resting HR<br><span class="small muted">28-day range ${Math.min(...rh)}–${Math.max(...rh)}</span></div>${spark(rh,'Resting HR, last 28 days')}</div>`:''}`+last7.map(k=>{const w=data.wellness[k],d=new Date(k+'T12:00');return `<div class="hist"><span><b>${DAYS[dow(d)]} ${fmt(d)}</b></span><span class="muted">${[w.rhr!=null?'RHR '+w.rhr:'',w.sleep!=null?w.sleep+' h sleep':'',w.hrv!=null?'HRV '+w.hrv:'',w.steps!=null?Math.round(w.steps/1000)+'k steps':''].filter(Boolean).join(' · ')||'—'}</span></div>`}).join('')}}
  document.getElementById('sessLog').innerHTML=data.sessions.length?data.sessions.map((s,i)=>[s,i]).slice(-10).reverse().map(([s,i])=>{const d=new Date(s.date),ns=Object.values(s.sets||{}).reduce((a,x)=>a+x.length,0),ok=Object.keys(s.sets||{}).every(n=>LIB.some(e=>e.name===n));
   return `<div class="hist"><div><b>${DAYS[dow(d)]} ${fmt(d)}</b> · ${esc(s.name)}<br><span class="muted">${s.min?`${esc(s.min)} min${s.km?', '+esc(s.km)+' km':''}${s.up?', '+s.up+' m↑':''}${s.src==='garmin'?' · Garmin':''}`:ns+' sets'}${s.rpe?' · RPE '+esc(s.rpe):''}${s.feel?' · felt '+esc(s.feel):''}</span></div><div style="white-space:nowrap">${ok?`<button onclick="reopen(${i})">Reopen</button>`:''}<button onclick="delSession(${i})">Delete</button></div></div>`}).join(''):'<span class="muted">Nothing logged yet.</span>';
 }
@@ -732,6 +754,8 @@ function makeReport(){
  const b=balance(m);L.push(``,`HARD SETS push ${b.push} · pull ${b.pull} · squat/lunge ${b.sq} · hinge ${b.hg}`);
  if(data.daily.length){const cnt=n=>{let c=0;for(let i=0;i<7;i++){const d=new Date(m);d.setDate(d.getDate()+i);if((data.dailyLog[localYmd(d)]||[]).includes(n))c++}return c};L.push(``,`DAILY ${data.daily.map(n=>`${n} ${cnt(n)}/7`).join(' · ')}`)}
  L.push(``,`BODYWEIGHT ${ws.length?ws.map(x=>x.v).join(', ')+' kg':'not logged'}`);
+ {const wa=data.waists.filter(x=>inWeek(x.date,m));if(wa.length)L.push(`WAIST ${wa.map(x=>x.v).join(', ')} cm`);const pw=[4,8,12].includes(w)&&w<=WEEKS?w:0;if(pw)L.push(`PHOTOS week ${pw}: ${data.photos[pw]?'taken '+data.photos[pw]:'due — sending with this report'}`)}
+ {const cw=wellWeek(m),pm=new Date(m);pm.setDate(pm.getDate()-7);const pv=wellWeek(pm);if(cw.n){const f=(v,d=0)=>v==null?'—':v.toFixed(d);L.push(``,`GARMIN RECOVERY resting HR ${f(cw.rhr)}${pv.rhr!=null?' (prev wk '+f(pv.rhr)+')':''}${cw.rhr!=null&&pv.rhr!=null&&cw.rhr-pv.rhr>=4?' ⚠ up':''} · sleep ${f(cw.sleep,1)} h${pv.sleep!=null?' (prev '+f(pv.sleep,1)+')':''} · HRV ${f(cw.hrv)} · steps ${cw.steps!=null?Math.round(cw.steps/1000)+'k/day':'—'}`)}}
  // Up to four weeks ending with this one, so the coach sees direction without the old reports.
  const wk=[];for(let i=3;i>=0;i--){const x=new Date(m);x.setDate(x.getDate()-7*i);if(x>=monday(data.start+'T00:00'))wk.push(x)}
  if(wk.length>1)L.push(``,`TREND wk ${weekNo(wk[0])}–${w}: sessions ${wk.map(x=>reqDone(doneKeys(x))).join(' → ')} · avg kg ${wk.map(x=>{const a=data.weights.filter(y=>inWeek(y.date,x)).map(y=>y.v);return a.length?(a.reduce((p,c)=>p+c,0)/a.length).toFixed(1):'—'}).join(' → ')}`);

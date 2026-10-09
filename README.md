@@ -51,6 +51,7 @@ Accessories (`rear`, `delt`, `core`, `calf`, `lateral`) are capped at 3 sets and
 - **Appearance** — theme: Match my phone (default) / Light / Dark. Dark mode follows the OS unless forced.
 - **Colour scheme** — Electric (default), Forest, Ember, Teal, Graphite; each has its own light and dark steps (PALETTES in index.html).
 - **Session screen** — Start on Today starts a live clock in the sticky bar; Finish logs the duration; **Discard without saving** drops a started session.
+- **Dumbbells I have** — the weights on your rack (space-separated; ranges like `5-30/2.5`); weight suggestions snap to the next one up and say so when you have reached the top.
 - **Equipment set-ups** — named presets (Full gym / Home / Hotel seeded). Tap one to load its kit; "Save current" stores the ticked kit under a name.
 - **Add this week to calendar** — downloads a `.ics` with the week's sessions at 06:00 and a 1-hour reminder (floating local time). Re-import after a coach update if the plan changed.
 - **In-app coach (optional)** — paste your own Anthropic API key to get the coach's reply inside the app (see below). The key is stored only on this phone, is sent only to `api.anthropic.com`, and is **excluded from backups**.
@@ -69,6 +70,22 @@ Today has a **Daily** card of tap-to-tick habits (default: posture drill, mobili
 
 A **This block** card totals the 12-week block: sessions/target, personal bests, km run, bodyweight change. After week 12 the app enters a maintenance state (sessions still log) and Today offers **Start a new 12-week block**, which resets the plan to week 1 and keeps all history.
 
+## Cloud backup
+
+`netlify/functions/backup.mjs` (`/api/backup`) keeps one copy of the app data in Netlify Blobs. It is locked by `REBUILD_TOKEN`, which is also the Garmin sync token.
+
+Set-up, once:
+1. Netlify → Project configuration → Environment variables → add `REBUILD_TOKEN` = any passphrase. Then Deploys → Trigger deploy.
+2. In the app: Settings → Data → type the same passphrase → **Save token** → switch on **Back up to the cloud automatically**.
+
+The app then backs up at most every 2 minutes while open (only when something changed) and on launch if the last copy is older than 6 h. On a new phone: open the site, enter the token, **Restore from cloud**. The stored copy never contains the token or the coach key. The Export/Import buttons remain for a file you hold yourself.
+
+## Body, photos, recovery
+
+- Today → **Body** logs weight and waist (navel, relaxed) in one go; Progress shows both trends and the block card shows the waist change.
+- At the end of weeks 4, 8 and 12 (Sat/Sun) Today shows a **Photo day** nudge — the same three photos, same spot — and the report carries a PHOTOS line until it is marked done.
+- With Garmin runs on, `netlify/functions/wellness.mjs` (`/api/wellness`) also pulls resting HR, HRV, sleep and steps from intervals.icu. Progress gets a **Recovery** card (28-day resting-HR line, last 7 days) and the report a GARMIN RECOVERY line with week-on-week comparison (⚠ when resting HR is up 4+ bpm).
+
 ## Garmin runs (via intervals.icu)
 
 Strava's API is subscriber-only since June 2026 and Garmin's official API is for approved companies, so runs come in through **intervals.icu** (free), which Garmin Connect pushes to officially. `netlify/functions/runs.mjs` (served at `/api/runs`) pulls recent runs/hikes with the personal API key kept in Netlify env vars; the page never sees the key.
@@ -78,7 +95,7 @@ Set-up, once:
 2. intervals.icu → Settings → **Developer settings** → generate an API key.
 3. Netlify → Project configuration → **Environment variables**: `INTERVALS_API_KEY` = that key. Optional: `REBUILD_TOKEN` = any passphrase (the app must then send it), `INTERVALS_ATHLETE_ID` (default `0` = the key's owner).
 4. Netlify → Deploys → **Trigger deploy**, so the function picks the variables up.
-5. In the app: Settings → **Garmin runs** → switch on (enter the token if you set one) → Save & sync.
+5. In the app: Settings → **Garmin runs** → switch on → Sync now. (The sync token lives in Settings → Data.)
 
 Sync runs on open (at most every 6 h) and on demand. Each run becomes an Easy run (weekday) or Long trail (Sat/Sun, ≥10 km or ≥70 min) with km, minutes, climb, HR and pace; a run on a day you already logged by hand fills in that entry instead. Runs are deduplicated by their intervals.icu id. The sync token is excluded from backups like the coach key. Locally, `dev-server.mjs` serves two demo runs at `/api/runs`.
 
