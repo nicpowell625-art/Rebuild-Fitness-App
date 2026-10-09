@@ -192,7 +192,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.0 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.0.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -546,7 +546,9 @@ function renderProgress(){
   <div><b style="font-size:22px">${bs.km||'—'}</b><br><span class="small muted">km run</span></div><div><b style="font-size:22px">${bs.bwDelta==null?'—':(bs.bwDelta<0?'−':'+')+Math.abs(bs.bwDelta).toFixed(1)}</b><br><span class="small muted">kg bodyweight</span></div></div>
   <div class="bar" style="margin-top:12px"><i style="width:${Math.min(bs.pct,100)}%"></i></div>`;
  let h='<div></div>'+['A','Run','B','C','Long'].map(x=>`<div class="muted">${x}</div>`).join('');
- for(let w=1;w<=Math.min(weekNo(),WEEKS);w++){const ss=data.sessions.filter(s=>s.week===w);h+=`<div class="muted">Wk ${w}</div>`+['A','run','B','C','long'].map(k=>`<div class="${ss.some(s=>s.key===k)?'y':'n'}">${ss.some(s=>s.key===k)?'✓':''}</div>`).join('')}
+ // Week from the date against the current start, so a changed start date re-buckets old sessions (and drops those before it) instead of trusting the week stored at log time.
+ const wkOf=d=>Math.round((monday(d)-monday(data.start+'T00:00'))/6048e5)+1;
+ for(let w=1;w<=Math.min(weekNo(),WEEKS);w++){const ss=data.sessions.filter(s=>wkOf(new Date(s.date))===w);h+=`<div class="muted">Wk ${w}</div>`+['A','run','B','C','long'].map(k=>`<div class="${ss.some(s=>s.key===k)?'y':'n'}">${ss.some(s=>s.key===k)?'✓':''}</div>`).join('')}
  document.getElementById('tickGrid').innerHTML=h;
  const {push,pull,sq,hg}=balance(monday(new Date()));
  const mx=Math.max(push,pull,sq,hg,1);
