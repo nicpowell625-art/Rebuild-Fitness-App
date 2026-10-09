@@ -55,6 +55,19 @@ Accessories (`rear`, `delt`, `core`, `calf`, `lateral`) are capped at 3 sets and
 
 A **This block** card totals the 12-week block: sessions/target, personal bests, km run, bodyweight change. After week 12 the app enters a maintenance state (sessions still log) and Today offers **Start a new 12-week block**, which resets the plan to week 1 and keeps all history.
 
+## Garmin runs (via intervals.icu)
+
+Strava's API is subscriber-only since June 2026 and Garmin's official API is for approved companies, so runs come in through **intervals.icu** (free), which Garmin Connect pushes to officially. `netlify/functions/runs.mjs` (served at `/api/runs`) pulls recent runs/hikes with the personal API key kept in Netlify env vars; the page never sees the key.
+
+Set-up, once:
+1. https://intervals.icu → create a free account → Settings → **Garmin Connect** → Connect (authorise on Garmin's site; optionally "Import all Garmin data" for history).
+2. intervals.icu → Settings → **Developer settings** → generate an API key.
+3. Netlify → Project configuration → **Environment variables**: `INTERVALS_API_KEY` = that key. Optional: `REBUILD_TOKEN` = any passphrase (the app must then send it), `INTERVALS_ATHLETE_ID` (default `0` = the key's owner).
+4. Netlify → Deploys → **Trigger deploy**, so the function picks the variables up.
+5. In the app: Settings → **Garmin runs** → switch on (enter the token if you set one) → Save & sync.
+
+Sync runs on open (at most every 6 h) and on demand. Each run becomes an Easy run (weekday) or Long trail (Sat/Sun, ≥10 km or ≥70 min) with km, minutes, climb, HR and pace; a run on a day you already logged by hand fills in that entry instead. Runs are deduplicated by their intervals.icu id. The sync token is excluded from backups like the coach key. Locally, `dev-server.mjs` serves two demo runs at `/api/runs`.
+
 ## The coach loop
 
 Sunday (or up to Wednesday for the week before): **Report → Share report** into the coaching chat. With "Include the coach brief" ticked, the report carries the reply format and the exact exercise names, so any chat can coach from it. The coach replies with a block; copy it and tap **Paste & apply**:

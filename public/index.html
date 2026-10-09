@@ -185,6 +185,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="field" style="margin-top:8px"><label>Model</label><select id="aiModel"><option value="claude-opus-5">Opus 5 — sharpest</option><option value="claude-sonnet-5">Sonnet 5 — cheaper</option><option value="claude-haiku-4-5">Haiku 4.5 — cheapest</option></select></div>
     <div class="links" style="margin-top:8px"><button class="primary" onclick="saveKey()">Save key</button><button onclick="clearKey()">Remove key</button></div><div id="keyMsg" class="small muted" style="margin-top:6px"></div>
   </div>
+  <div class="card"><div class="cardhead"><h2>Garmin runs</h2><span class="pill">via intervals.icu</span></div><p class="small muted" style="margin-top:0">Watch → Garmin Connect → intervals.icu (free) → here. Runs and hikes land on the right day with distance, time, climb and heart rate, and tick the week for you. Set-up steps are in the README.</p>
+    <label class="tog"><input type="checkbox" id="garminOn" onchange="data.garmin=this.checked;save();if(this.checked)syncRuns(true)"> Pull my runs automatically</label>
+    <div class="field" style="margin-top:8px"><label>Sync token (only if you set REBUILD_TOKEN in Netlify)</label><input id="icuToken" type="password" autocomplete="off" placeholder="optional"></div>
+    <div class="links" style="margin-top:8px"><button class="primary" onclick="data.icuToken=document.getElementById('icuToken').value.trim();save();syncRuns(true)">Save &amp; sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
   <div class="card"><div class="cardhead"><h2>Headache log</h2></div>
     <div class="grid2"><div class="field"><label>Intensity 0–10</label><input id="haInt" type="number" min="0" max="10" inputmode="numeric"></div><div class="field"><label>Hours</label><input id="haHrs" type="text" inputmode="decimal"></div></div>
     <div class="field" style="margin-top:8px"><label>Likely factors</label><input id="haNote" type="text" placeholder="sleep, dehydration, travel…"></div>
@@ -192,7 +196,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.1.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.2 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -294,7 +298,7 @@ const SLOT={A:0,run:1,B:2,C:4,long:5};
 const WARM='Warm-up 5 min: 20 squats, 10 hinges, 10 lunges a side, 10 rows, 10 scapular push-ups (push the floor away), 10 push-ups, 10 wall slides reaching tall, 30 s deep squat. Mobility 10 min after.';
 
 let data=JSON.parse(localStorage.getItem(KEY)||'{}');
-const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5'};
+const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0};
 for(const k in D)if(data[k]===undefined)data[k]=D[k];
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 const WEEKS=12; // programme length; sessions past this roll into a maintenance state
@@ -381,7 +385,7 @@ function render(){applyTheme();
  sc.innerHTML=(due||late?`<h2>${late?'Last week’s report':'Sunday'}</h2><p>${late?'Still due. The Report tab is set to last week until Wednesday.':'Score the week and send the report. Two minutes.'}</p><button class="primary" onclick="show('report')">Do the report</button>`:'')+(stale?`<p class="small muted" style="margin-top:${due||late?10:0}px">No backup ${data.lastBackup?'since '+fmt(new Date(data.lastBackup)):'yet'}, and your log lives only on this phone. <a href="#" onclick="show('settings');return false">Settings → Data</a>.</p>`:'');
  document.getElementById('startDate').value=data.start;document.getElementById('travel').checked=data.travel;document.getElementById('restSec').value=data.rest;drawTimeSeg();
  document.getElementById('sound').checked=data.sound;document.getElementById('bkAge').textContent=data.lastBackup?`Last backup ${fmt(new Date(data.lastBackup))}.`:'No backup yet.';document.getElementById('shareBk').classList.toggle('hidden',!CAN_SHARE_FILES);
- document.getElementById('themeSel').value=data.theme;document.getElementById('aiModel').value=data.aiModel;document.getElementById('apiKey').value=data.apiKey;document.getElementById('keyMsg').textContent=data.apiKey?'A key is saved on this phone. The in-app coach is on.':'';
+ document.getElementById('garminOn').checked=data.garmin;document.getElementById('icuToken').value=data.icuToken;{const im=document.getElementById('icuMsg');if(!im.textContent&&data.icuLast)im.textContent='Last sync '+fmt(new Date(data.icuLast))+'.'}document.getElementById('themeSel').value=data.theme;document.getElementById('aiModel').value=data.aiModel;document.getElementById('apiKey').value=data.apiKey;document.getElementById('keyMsg').textContent=data.apiKey?'A key is saved on this phone. The in-app coach is on.':'';
  document.getElementById('eqChk').innerHTML=Object.entries(EQUIP).map(([id,n])=>`<label><input type="checkbox" ${data.equip.includes(id)?'checked':''} onchange="toggleEq('${id}',this.checked)">${n}</label>`).join('')+`<label><input type="checkbox" ${data.equip.length?'':'checked'} onchange="if(this.checked){data.equip=[];save();render()}">Bodyweight only</label>`;
  document.getElementById('profRow').innerHTML=data.profiles.map((p,i)=>`<button class="${sameEquip(p.equip)?'on':''}" onclick="applyProfile(${i})">${esc(p.name)}</button>`).join('')+(data.profiles.length?`<button onclick="delProfile()" aria-label="remove a set-up">✕</button>`:'<span class="small muted">None saved.</span>');
  document.getElementById('eqBtn').textContent=data.equip.map(q=>EQUIP[q].split(' ')[0]).join(', ')||'Bodyweight';
@@ -518,6 +522,27 @@ function openEx(i){const r=curS?.rows[i];if(!r)return;const e=r.e,k=woKey,ov=dat
  ${alts.length?`<div class="eyebrow" style="margin-top:14px">Swap for</div><div class="swaplist">${alts.map(o=>`<button class="swapopt" onclick="closeSheet();swap('${k}','${r.pat}','${o.name.replace(/'/g,"\\'")}')">${thumb(o)}<span>${esc(o.name)}<br><small>${o.eq.length?o.eq.map(q=>EQUIP[q]).join(', '):'Bodyweight'}</small></span></button>`).join('')}</div>`:''}`)}
 // Minutes since the first logged set, in the sticky session bar.
 function elapsedTick(){const el=document.getElementById('woElapsed');if(!el||!woKey)return;const d=draftFor(woKey);if(woKey==='off'){el.textContent='Nothing queued';return}if(!d||!d.started){el.textContent='Not started';return}const t=Math.floor((Date.now()-d.started)/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),sec=t%60;el.textContent=(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(sec).padStart(2,'0')+' elapsed'}
+// ---- Garmin runs via intervals.icu (netlify/functions/runs.mjs) ----
+const paceStr=sec=>`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+// Pulls runs since a week before the block start. A run on a day you logged by hand is matched to that entry (numbers filled in); otherwise it becomes a run or long-trail session and ticks the week.
+async function syncRuns(manual){
+ if(!data.garmin&&!manual)return;const msg=document.getElementById('icuMsg');
+ try{
+  const since=new Date(monday(data.start+'T00:00'));since.setDate(since.getDate()-7);
+  const r=await fetch(`/api/runs?since=${localYmd(since)}${data.icuToken?'&t='+encodeURIComponent(data.icuToken):''}`,{cache:'no-store'});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?'Token rejected — it must match REBUILD_TOKEN in Netlify.':r.status===503?'Not set up on Netlify yet (INTERVALS_API_KEY), or the site needs a redeploy.':r.status===404?'The sync function isn’t deployed on this site.':(e.error||'Sync failed')+' ('+r.status+').')}
+  const {runs=[]}=await r.json();let added=0,updated=0;
+  runs.forEach(a=>{const d=new Date(a.date);if(isNaN(d)||data.sessions.some(x=>x.icuId===a.id))return;const day=localYmd(d);
+   const key=(dow(d)>=5||a.km>=10||a.min>=70)?'long':'run';
+   const same=data.sessions.find(x=>!x.icuId&&(x.key==='run'||x.key==='long')&&localYmd(new Date(x.date))===day);
+   const fields={min:String(a.min),km:String(a.km),up:a.up,hr:a.hr,pace:a.pace,load:a.load,src:'garmin',icuId:a.id,act:a.name};
+   if(same){Object.assign(same,fields);updated++}else{data.sessions.push({date:d.toISOString(),key,weekday:SLOT[key],name:WEEK[SLOT[key]].n,week:weekNo(d),time:'',sets:{},pats:{},...fields});added++}});
+  data.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);data.icuLast=Date.now();save();
+  if(msg)msg.textContent=`Synced ${fmt(new Date())}: ${runs.length} run${runs.length===1?'':'s'} found, ${added} added, ${updated} matched to entries you logged.`;
+  if(added||updated)toast(`Garmin: ${added} run${added===1?'':'s'} added${updated?', '+updated+' updated':''}.`);
+  if(view==='today')render();if(view==='progress')renderProgress();
+ }catch(e){if(msg)msg.textContent=e.message;if(manual)toast(e.message)}
+}
 // ---- rest timer ----
 let tEnd=0,tInt=null;
 let tTotal=0;
@@ -537,7 +562,7 @@ async function wake(on){try{
  if(!tInt){x.release();return}
  wl=x;x.addEventListener('release',()=>{if(wl===x)wl=null});
 }catch(e){}}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tInt)wake(true)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(tInt)wake(true);if(data.garmin&&navigator.onLine&&Date.now()-(data.icuLast||0)>6*36e5)syncRuns()});
 // ---- progress ----
 function saveWeight(){const v=parseFloat(dec(document.getElementById('bw').value));if(isNaN(v))toast('Enter your weight in kg, e.g. 82.5');else{data.weights.push({date:new Date().toISOString(),v});document.getElementById('bw').value='';save();render()}}
 function renderProgress(){
@@ -562,7 +587,7 @@ function renderProgress(){
  const ws=data.weights.slice(-30),wv=ws.map(x=>x.v),dl=ws.length>1?wv.at(-1)-wv[0]:0;
  document.getElementById('weights').innerHTML=ws.length?`<div class="trend"><div><b>${wv.at(-1)} kg</b>${ws.length>1?` <span class="muted">· ${dl<0?'−':'+'}${Math.abs(dl).toFixed(1)} kg since ${fmt(new Date(ws[0].date))}</span>`:''}</div>${spark(wv,`Bodyweight: ${wv[0]} to ${wv.at(-1)} kg`)}</div>`+ws.slice(-14).map(x=>`${fmt(new Date(x.date))}: <b>${x.v} kg</b>`).join('<br>'):'<span class="muted">No entries yet.</span>';
  document.getElementById('sessLog').innerHTML=data.sessions.length?data.sessions.map((s,i)=>[s,i]).slice(-10).reverse().map(([s,i])=>{const d=new Date(s.date),ns=Object.values(s.sets||{}).reduce((a,x)=>a+x.length,0),ok=Object.keys(s.sets||{}).every(n=>LIB.some(e=>e.name===n));
-  return `<div class="hist"><div><b>${DAYS[dow(d)]} ${fmt(d)}</b> · ${esc(s.name)}<br><span class="muted">${s.min?`${esc(s.min)} min${s.km?', '+esc(s.km)+' km':''}`:ns+' sets'}${s.rpe?' · RPE '+esc(s.rpe):''}${s.feel?' · felt '+esc(s.feel):''}</span></div><div style="white-space:nowrap">${ok?`<button onclick="reopen(${i})">Reopen</button>`:''}<button onclick="delSession(${i})">Delete</button></div></div>`}).join(''):'<span class="muted">Nothing logged yet.</span>';
+  return `<div class="hist"><div><b>${DAYS[dow(d)]} ${fmt(d)}</b> · ${esc(s.name)}<br><span class="muted">${s.min?`${esc(s.min)} min${s.km?', '+esc(s.km)+' km':''}${s.up?', '+s.up+' m↑':''}${s.src==='garmin'?' · Garmin':''}`:ns+' sets'}${s.rpe?' · RPE '+esc(s.rpe):''}${s.feel?' · felt '+esc(s.feel):''}</span></div><div style="white-space:nowrap">${ok?`<button onclick="reopen(${i})">Reopen</button>`:''}<button onclick="delSession(${i})">Delete</button></div></div>`}).join(''):'<span class="muted">Nothing logged yet.</span>';
 }
 // Hard sets in the week starting m, grouped the way the Balance card reads them.
 function balance(m){const b={};data.sessions.filter(s=>inWeek(s.date,m)).forEach(s=>Object.entries(s.pats||{}).forEach(([p,n])=>b[p]=(b[p]||0)+n));const n=k=>b[k]||0;return{push:n('hpush')+n('vpush'),pull:n('hpull')+n('vpull')+n('rear'),sq:n('squat')+n('unilateral')+n('lunge')+n('step'),hg:n('hinge')+n('uhinge')}}
@@ -587,7 +612,7 @@ function makeReport(){
  const m=new Date((document.getElementById('repWeek').value||localYmd(monday(new Date())))+'T00:00'),cur=+m===+monday(new Date()),w=weekNo(m),ss=data.sessions.filter(s=>inWeek(s.date,m)),ws=data.weights.filter(x=>inWeek(x.date,m)),ha=data.headaches.filter(x=>inWeek(x.date,m));
  const v=id=>document.getElementById(id).value||'—',trav=ss.some(s=>s.travel)||(cur&&data.travel);
  let L=[`REBUILD WEEKLY REPORT`,`Week ${w} of 12, phase ${phase(w)}, ${fmt(m)} – ${fmt(new Date(m.getTime()+6*864e5))}${trav?' (travel week)':''}`,`Equipment: ${data.equip.map(q=>EQUIP[q]).join(', ')||'bodyweight'} · streak ${streak()} wk`,``,`SESSIONS ${ss.length}/${trav?3:5}`];
- ss.forEach(s=>{L.push(`${DAYS[dow(new Date(s.date))]} ${s.name}${s.time&&s.key.length===1?` (${s.time} min plan${s.dur?', took '+s.dur:''})`:''}${s.min?` ${s.min} min${s.km?', '+s.km+' km':''}`:''}${s.feel?` felt ${s.feel}`:''}${s.rpe?` RPE ${s.rpe}`:''}${s.note?' — '+s.note:''}`);
+ ss.forEach(s=>{L.push(`${DAYS[dow(new Date(s.date))]} ${s.name}${s.time&&s.key.length===1?` (${s.time} min plan${s.dur?', took '+s.dur:''})`:''}${s.min?` ${s.min} min${s.km?', '+s.km+' km':''}${s.up?', '+s.up+' m↑':''}${s.pace?', '+paceStr(s.pace)+'/km':''}${s.hr?', HR '+s.hr:''}${s.src==='garmin'?' [Garmin]':''}`:''}${s.feel?` felt ${s.feel}`:''}${s.rpe?` RPE ${s.rpe}`:''}${s.note?' — '+s.note:''}`);
   Object.entries(s.sets||{}).forEach(([n,a])=>{const u=LIB.find(e=>e.name===n)?.load==='time'?' s':'',f=a=>a.map(x=>`${x.kg?x.kg+'×':''}${x.reps||'?'}${u}`).join(', '),prev=history(n).filter(h=>h.date<s.date).at(-1);L.push(`  ${n}: ${f(a)} (${prev?'prev '+f(prev.sets):'first time'})`)})});
  const b=balance(m);L.push(``,`HARD SETS push ${b.push} · pull ${b.pull} · squat/lunge ${b.sq} · hinge ${b.hg}`);
  L.push(``,`BODYWEIGHT ${ws.length?ws.map(x=>x.v).join(', ')+' kg':'not logged'}`);
@@ -665,7 +690,7 @@ function setStart(v){if(v){data.start=v;save();render()}}
 function setTravel(on){data.travel=on;save();render()}
 function setRest(v){data.rest=Math.max(30,+v||90);save()}
 // The API key is deliberately kept out of backups so a shared file never carries it.
-const backupText=()=>JSON.stringify({app:'REBUILD',version:4,data:{...data,apiKey:''}},null,1);
+const backupText=()=>JSON.stringify({app:'REBUILD',version:4,data:{...data,apiKey:'',icuToken:''}},null,1);
 function backedUp(){data.lastBackup=Date.now();save();render()}
 function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([backupText()],{type:'application/json'}));a.download='rebuild-'+localYmd()+'.json';a.click();backedUp()}
 // Share sheet → Drive, email, WhatsApp-to-self. Sent as .txt because phones refuse to share .json files; Import accepts both.
@@ -677,7 +702,7 @@ applyTheme();
 matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',()=>{if(data.theme==='auto')applyTheme()});
 wireEntry();
 ['input','change'].forEach(ev=>document.getElementById('workout').addEventListener(ev,captureDraft));
-render();setInterval(elapsedTick,1000);
+render();setInterval(elapsedTick,1000);if(data.garmin&&navigator.onLine&&Date.now()-(data.icuLast||0)>6*36e5)syncRuns();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 // Ask the browser not to evict the training log under storage pressure.
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});

@@ -1,5 +1,5 @@
 // Bump CACHE whenever index.html changes, or phones keep the old version.
-const CACHE='rebuild-v14';
+const CACHE='rebuild-v15';
 const IMG='rebuild-img-v1'; // exercise demo frames; survives app-shell bumps
 const FILES=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)))});
@@ -7,6 +7,7 @@ self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.a
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const url=new URL(e.request.url);
+  if(url.pathname.startsWith('/api/'))return; // live data, never cached
   // Exercise images: cache-first, so a session seen once shows its demos offline.
   if(url.hostname==='cdn.jsdelivr.net'||url.hostname==='raw.githubusercontent.com'){
     e.respondWith(caches.open(IMG).then(c=>c.match(e.request).then(r=>r||fetch(e.request).then(x=>{if(x.ok)c.put(e.request,x.clone());return x}))));
