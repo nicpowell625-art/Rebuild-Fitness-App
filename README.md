@@ -17,14 +17,14 @@ node dev-server.mjs
 
 Then open http://localhost:4173.
 
-## Deploy (Netlify)
+## Deploy (Netlify, from Git)
 
-Drag the **`public` folder** (or `deploy/rebuild-netlify.zip`) onto https://app.netlify.com/drop — or, for an existing site, onto its **Deploys** page.
-It must be the whole folder, not just `index.html`: the install prompt and offline mode need `manifest.json`, `sw.js` and the icons beside it.
+Live site: https://spectacular-selkie-59e3c4.netlify.app/ — linked to this repo (`nicpowell625-art/Rebuild-Fitness-App`, branch `main`). Every push to `main` redeploys it; `netlify.toml` publishes `public/` with no build step. Don't use Netlify Drop again: each drop makes a new site with a new URL, and the training log lives at the URL.
 
-- Settle the site name (Site configuration → Change site name) **before** logging on the phone. The log belongs to the web address; rename later and the data stays behind at the old one (Export → Import carries it over).
+- Flow: edit → bump `CACHE` in `public/sw.js` and the version line at the bottom of Settings → commit → `git push`. Phones pick the new version up next time they open the app online.
+- Site name: settle it once (Site configuration → Change site name). Renaming changes the URL; export the backup first and import it at the new address.
 - On the phone: open the URL in Chrome → menu → **Add to Home screen / Install app**.
-- Updating: drop the new folder on the same site. Phones pick it up the next time they open the app online. Bump `CACHE` in `public/sw.js` when `index.html` changes.
+- `deploy/rebuild-netlify.zip` is only a fallback for a manual drop onto the existing site's Deploys page.
 
 ## Design (v6)
 
