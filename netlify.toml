@@ -1,0 +1,13 @@
+# Netlify: static site, nothing to build. The app is the public/ folder.
+[build]
+  publish = "public"
+
+# Never let the service worker or shell go stale in a CDN cache; the SW itself caches for offline.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
