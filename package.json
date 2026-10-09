@@ -1,0 +1,10 @@
+{
+  "name": "rebuild",
+  "private": true,
+  "version": "6.5.0",
+  "type": "module",
+  "description": "Rebuild training tracker — static PWA in public/, Netlify functions in netlify/functions/",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.4"
+  }
+}

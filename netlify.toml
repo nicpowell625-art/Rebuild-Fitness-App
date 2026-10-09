@@ -11,3 +11,9 @@
   for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache"
+
+# Functions: bundle with esbuild on Node 22 (needed by @netlify/blobs 11).
+[functions]
+  node_bundler = "esbuild"
+[build.environment]
+  AWS_LAMBDA_JS_RUNTIME = "nodejs22.x"

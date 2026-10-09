@@ -39,7 +39,7 @@ header.top{display:flex;justify-content:space-between;align-items:center;padding
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
 .wd{text-align:center;font-size:11px;color:var(--muted)}.wd .wl{display:block;font-weight:700;margin-bottom:6px}
 .wc{display:grid;place-items:center;width:38px;height:38px;margin:0 auto;border-radius:50%;background:var(--fog);color:var(--ink2);font-weight:800;font-size:13px}
-.wc.s{background:var(--moss);color:#fff}.wc.r{background:var(--sage);color:#0b2f2a}.wc.c{background:var(--clay);color:#fff}.wc.done{background:var(--ok);color:#fff}
+.wc.s{background:var(--moss);color:#fff}.wc.r{background:var(--sage);color:#0b2f2a}.wc.c{background:var(--clay);color:#fff}.wc.done{background:var(--ok);color:#fff}.wc.skip{opacity:.35}
 .wd.today .wc{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--clay)}.ws{display:block;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row{display:flex;gap:8px;align-items:center}.row input{flex:1}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .nudge{border-left:4px solid var(--clay)}
@@ -179,6 +179,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="card"><div class="cardhead"><h2>Equipment</h2></div><p class="small muted" style="margin-top:0">Tick what's available. Sessions rebuild themselves around it.</p>
     <div class="eyebrow" style="margin-top:10px">Set-ups — tap to load</div><div class="links" id="profRow" style="margin-top:4px"></div>
     <div class="row" style="margin-top:8px"><input id="profName" type="text" placeholder="Name this set-up" autocomplete="off"><button class="secondary" onclick="saveProfile()">Save current</button></div>
+    <div class="field" style="margin-top:12px"><label>Dumbbells I have (kg per dumbbell, separated by spaces; ranges like 5-30/2.5 work)</label><input id="dbSet" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 5 7.5 10 12.5 15 20 25" onchange="setDbSet(this.value)"></div>
     <div class="chk" id="eqChk" style="margin-top:12px"></div>
     <button class="primary hidden" id="backWo" style="margin-top:12px" onclick="show('workout')">← Back to session</button></div>
   <div class="card"><div class="cardhead"><h2>Programme</h2></div>
@@ -197,15 +198,18 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   </div>
   <div class="card"><div class="cardhead"><h2>Garmin runs</h2><span class="pill">via intervals.icu</span></div><p class="small muted" style="margin-top:0">Watch → Garmin Connect → intervals.icu (free) → here. Runs and hikes land on the right day with distance, time, climb and heart rate, and tick the week for you. Set-up steps are in the README.</p>
     <label class="tog"><input type="checkbox" id="garminOn" onchange="data.garmin=this.checked;save();if(this.checked)syncRuns(true)"> Pull my runs automatically</label>
-    <div class="field" style="margin-top:8px"><label>Sync token (only if you set REBUILD_TOKEN in Netlify)</label><input id="icuToken" type="password" autocomplete="off" placeholder="optional"></div>
-    <div class="links" style="margin-top:8px"><button class="primary" onclick="data.icuToken=document.getElementById('icuToken').value.trim();save();syncRuns(true)">Save &amp; sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
-  <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
+    <div class="links" style="margin-top:8px"><button class="primary" onclick="syncRuns(true)">Sync now</button></div><div id="icuMsg" class="small muted" style="margin-top:6px"></div></div>
+  <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives on this phone, at this web address. <span id="bkAge"></span></p>
+    <div class="field" style="margin-top:8px"><label>Sync token (REBUILD_TOKEN in Netlify — unlocks cloud backup; Garmin uses it too)</label><input id="icuToken" type="password" autocomplete="off" placeholder="the passphrase you set in Netlify"></div>
+    <label class="tog"><input type="checkbox" id="cloudOn" onchange="data.cloud=this.checked;save();render();if(this.checked)cloudBackup(true)"> Back up to the cloud automatically</label>
+    <div class="links" style="margin-top:8px"><button class="primary" onclick="saveToken()">Save token</button><button onclick="cloudBackup(true)">Back up now</button><button onclick="cloudRestore()">Restore from cloud</button></div><div id="cloudMsg" class="small muted" style="margin:6px 0 10px"></div>
+    <div class="eyebrow">On this phone</div><div class="links" style="margin-top:4px"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.4.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.5 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
-<div id="toast" class="hidden" role="status" aria-live="polite"></div>
+<div id="toast" class="hidden" role="status" aria-live="polite" onclick="if(pendingReload)location.reload()"></div>
 
 <div id="timer" class="hidden" role="timer"><div class="tprog"><i id="timerBar"></i></div><div class="trow"><div><div class="eyebrow">Rest</div><b id="timerTxt">1:30</b></div><div class="tbtns"><button onclick="timerAdd(-15)">−15</button><button onclick="timerAdd(30)">+30</button><button class="skip" onclick="timerStop()">Skip</button></div></div></div>
 
@@ -306,9 +310,9 @@ const reqDone=set=>[...set].filter(k=>k!=='run2').length;
 const WARM='Warm-up 8 min: the mobility routine, then one easy wake-up round. Open it below. Stretch at the end of the session.';
 
 let data=JSON.parse(localStorage.getItem(KEY)||'{}');
-const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0,thuRun:false,palette:'electric',daily:['Posture drill · 2 min','Mobility · 10 min','Walk'],dailyLog:{}};
+const D={sessions:[],weights:[],headaches:[],overrides:{},swaps:{},start:'2026-09-14',travel:false,pick:null,equip:['db','trx'],time:'60',rest:90,reports:[],drafts:{},cues:{},sound:true,brief:true,lastBackup:0,theme:'auto',profiles:[{name:'Full gym',equip:['db','bb','bench','trx','bar','kb']},{name:'Home',equip:['db','trx','bar']},{name:'Hotel',equip:[]}],apiKey:'',aiModel:'claude-opus-5',garmin:false,icuToken:'',icuLast:0,cloud:false,cloudLast:0,dbSet:[],icuIgnore:[],thuRun:false,palette:'electric',daily:['Posture drill · 2 min','Mobility · 10 min','Walk'],dailyLog:{}};
 for(const k in D)if(data[k]===undefined)data[k]=D[k];
-function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+let dirty=false;function save(){localStorage.setItem(KEY,JSON.stringify(data));dirty=true}function saveQuiet(){localStorage.setItem(KEY,JSON.stringify(data))}
 const WEEKS=12; // programme length; sessions past this roll into a maintenance state
 const PHASES=['back in the door','build the base','the May block'];
 const FEEL={good:'Good',flat:'Flat',rough:'Rough'};
@@ -362,7 +366,7 @@ function suggest(e,sets){
  const v=x=>+x.reps||0,kg=+last[0].kg||0;
  if(e.load==='time'){const t=Math.max(...last.map(v));return t>=e.hi?`You held ${t} s. ${e.inc?`Go heavier by ${e.inc}%`:''}${e.harder?' or: '+e.harder:''}.`:`Last ${t} s. Add 5 s per set.`}
  const allTop=last.length>=sets&&last.every(x=>v(x)>=e.hi),anyLow=last.some(x=>v(x)<e.lo);
- if(e.load==='kg'){if(allTop)return `All sets hit ${e.hi} at ${kg} kg. Go up to ${kg+e.inc} kg, back to ${e.lo} reps.`;if(anyLow)return `Missed the range at ${kg} kg. Stay there, or drop 10%, and own every rep.`;return `Same ${kg} kg. Add one rep to each set: aim ${last.map(x=>v(x)+1).join(', ')}.`}
+ if(e.load==='kg'){const up=nextKg(e,kg);if(allTop)return up===null?`All sets hit ${e.hi} at ${kg} kg and that is the top of your rack. Slow the lowering to 3 s, or add a pause at the bottom.`:`All sets hit ${e.hi} at ${kg} kg. Go up to ${up} kg${Math.abs(up-(kg+e.inc))>0.01?' (next on your rack)':''}, back to ${e.lo} reps.`;if(anyLow)return `Missed the range at ${kg} kg. Stay there, or drop 10%, and own every rep.`;return `Same ${kg} kg. Add one rep to each set: aim ${last.map(x=>v(x)+1).join(', ')}.`}
  if(allTop)return `Top of range every set. Make it harder: ${e.harder||'slower eccentric, then a pause'}.`;return `Add one rep per set: aim ${last.map(x=>v(x)+1).join(', ')}.`
 }
 function e1rm(kg,reps){return kg*(1+reps/30)}
@@ -383,7 +387,7 @@ function render(){applyTheme();
  const dcard=document.getElementById('doneCard'),over=w>WEEKS;dcard.classList.toggle('hidden',!over);
  if(over){const b=blockStats();dcard.innerHTML=`<h2>Block complete 🎉</h2><p>Twelve weeks done — ${b.done}/${b.target} sessions (${b.pct}%)${b.bwDelta!=null?`, ${b.bwDelta<0?'−':'+'}${Math.abs(b.bwDelta).toFixed(1)} kg`:''}. Full breakdown on Progress.</p><p class="small muted">Sessions still log and count; start a fresh block to reset the plan to week 1.</p><button class="primary" onclick="newBlock()">Start a new 12-week block</button>`}
  const SHORT={A:'Lower',run:'Run',B:'Upper',run2:'Run',off:'Rest',C:'Full',long:'Trail',plan:'Plan'},td=dow(new Date());
- document.getElementById('weekStrip').innerHTML=WEEK.map((d,i)=>`<div class="wd ${i===td?'today':''}"><span class="wl">${'MTWTFSS'[i]}</span><span class="wc ${d.cls} ${done.has(i)?'done':''}">${done.has(i)?'✓':d.k.length===1?d.k:/run/.test(d.k)?'R':d.k==='long'?'L':'·'}</span><span class="ws">${SHORT[d.k]}</span></div>`).join('');
+ document.getElementById('weekStrip').innerHTML=WEEK.map((d,i)=>`<div class="wd ${i===td?'today':''}"><span class="wl">${'MTWTFSS'[i]}</span><span class="wc ${d.cls} ${done.has(i)?'done':''}${d.k!=='off'&&d.k!=='plan'&&!order().includes(d.k)?' skip':''}">${done.has(i)?'✓':d.k.length===1?d.k:/run/.test(d.k)?'R':d.k==='long'?'L':'·'}</span><span class="ws">${SHORT[d.k]}</span></div>`).join('');
  document.getElementById('weekNote').textContent=p===1?'Two working sets, three reps in the tank. Five ticks is the whole job.':p===2?'Three working sets, one to two in the tank on the last. Hit the top of the range clean, then go up.':'Mass first: tempo, pauses, heavy single-leg work. Saturday builds to 120 min.';
  {const d0=draftFor(k);document.getElementById('startBtn').textContent=d0?(d0.started?`Continue session · ${Math.max(1,Math.round((Date.now()-d0.started)/6e4))} min in`:'Continue session'):'Start session'}
  {const hw=data.headaches.filter(x=>inWeek(x.date,monday(new Date()))),last=data.headaches.at(-1);document.getElementById('haSummary').textContent=hw.length?`${hw.length} this week · last ${DAYS[dow(new Date(last.date))]} ${last.i}/10${last.h?', '+last.h+' h':''}${last.n?' · '+last.n:''}`:last?`None this week · last ${fmt(new Date(last.date))}`:'None logged. Tap Log one when you get one; it goes into the Sunday report.'}
@@ -398,7 +402,7 @@ function render(){applyTheme();
  sc.innerHTML=(due||late?`<h2>${late?'Last week’s report':'Sunday'}</h2><p>${late?'Still due. The Report tab is set to last week until Wednesday.':'Score the week and send the report. Two minutes.'}</p><button class="primary" onclick="show('report')">Do the report</button>`:'')+(stale?`<p class="small muted" style="margin-top:${due||late?10:0}px">No backup ${data.lastBackup?'since '+fmt(new Date(data.lastBackup)):'yet'}, and your log lives only on this phone. <a href="#" onclick="show('settings');return false">Settings → Data</a>.</p>`:'');
  document.getElementById('startDate').value=data.start;document.getElementById('travel').checked=data.travel;document.getElementById('restSec').value=data.rest;drawTimeSeg();
  document.getElementById('sound').checked=data.sound;document.getElementById('bkAge').textContent=data.lastBackup?`Last backup ${fmt(new Date(data.lastBackup))}.`:'No backup yet.';document.getElementById('shareBk').classList.toggle('hidden',!CAN_SHARE_FILES);
- document.getElementById('palRow').innerHTML=Object.entries(PALETTES).map(([k,p])=>`<button class="${data.palette===k?'on':''}" onclick="setPalette('${k}')"><span class="sw" style="background:linear-gradient(135deg,${p.l.heroA},${p.l.clay})"></span>${p.n}</button>`).join('');document.getElementById('thuRun').checked=data.thuRun;document.getElementById('garminOn').checked=data.garmin;document.getElementById('icuToken').value=data.icuToken;{const im=document.getElementById('icuMsg');if(!im.textContent&&data.icuLast)im.textContent='Last sync '+fmt(new Date(data.icuLast))+'.'}document.getElementById('themeSel').value=data.theme;document.getElementById('aiModel').value=data.aiModel;document.getElementById('apiKey').value=data.apiKey;document.getElementById('keyMsg').textContent=data.apiKey?'A key is saved on this phone. The in-app coach is on.':'';
+ document.getElementById('palRow').innerHTML=Object.entries(PALETTES).map(([k,p])=>`<button class="${data.palette===k?'on':''}" onclick="setPalette('${k}')"><span class="sw" style="background:linear-gradient(135deg,${p.l.heroA},${p.l.clay})"></span>${p.n}</button>`).join('');document.getElementById('thuRun').checked=data.thuRun;document.getElementById('cloudOn').checked=data.cloud;{const cm=document.getElementById('cloudMsg');if(!cm.textContent)cm.textContent=data.cloud?(data.cloudLast?'Last cloud backup '+fmt(new Date(data.cloudLast))+'.':'Not backed up yet.'):'Off. Needs the sync token.'}{const ds=document.getElementById('dbSet');if(document.activeElement!==ds)ds.value=data.dbSet.join(' ')}document.getElementById('garminOn').checked=data.garmin;document.getElementById('icuToken').value=data.icuToken;{const im=document.getElementById('icuMsg');if(!im.textContent&&data.icuLast)im.textContent='Last sync '+fmt(new Date(data.icuLast))+'.'}document.getElementById('themeSel').value=data.theme;document.getElementById('aiModel').value=data.aiModel;document.getElementById('apiKey').value=data.apiKey;document.getElementById('keyMsg').textContent=data.apiKey?'A key is saved on this phone. The in-app coach is on.':'';
  document.getElementById('eqChk').innerHTML=Object.entries(EQUIP).map(([id,n])=>`<label><input type="checkbox" ${data.equip.includes(id)?'checked':''} onchange="toggleEq('${id}',this.checked)">${n}</label>`).join('')+`<label><input type="checkbox" ${data.equip.length?'':'checked'} onchange="if(this.checked){data.equip=[];save();render()}">Bodyweight only</label>`;
  document.getElementById('profRow').innerHTML=data.profiles.map((p,i)=>`<button class="${sameEquip(p.equip)?'on':''}" onclick="applyProfile(${i})">${esc(p.name)}</button>`).join('')+(data.profiles.length?`<button onclick="delProfile()" aria-label="remove a set-up">✕</button>`:'<span class="small muted">None saved.</span>');
  document.getElementById('eqBtn').textContent=data.equip.map(q=>EQUIP[q].split(' ')[0]).join(', ')||'Bodyweight';
@@ -527,10 +531,10 @@ function completeWorkout(){
 function reopen(i){
  const s=data.sessions[i];if(!confirm('Reopen to edit? It comes off the log until you tap Finish again.'+(draftFor(s.key)?` Your unfinished ${s.name} entries will be replaced.`:'')))return;
  const sets={};Object.entries(s.sets||{}).forEach(([n,a])=>sets[n]=a.map(x=>({kg:x.kg,reps:x.reps,ticked:true})));
- data.drafts[s.key]={t:Date.now(),sets,feel:s.feel,keep:{time:s.time,travel:s.travel,...(s.dur?{dur:s.dur}:{})},f:{woRpe:s.rpe||'',woNote:s.note||'',runMin:s.min||'',runKm:s.km||'',woDate:localYmd(new Date(s.date))}};
+ data.drafts[s.key]={t:Date.now(),sets,feel:s.feel,keep:{time:s.time,travel:s.travel,...(s.dur?{dur:s.dur}:{}),...(s.icuId?{icuId:s.icuId,src:s.src,up:s.up,hr:s.hr,pace:s.pace,load:s.load,act:s.act}:{})},f:{woRpe:s.rpe||'',woNote:s.note||'',runMin:s.min||'',runKm:s.km||'',woDate:localYmd(new Date(s.date))}};
  data.sessions.splice(i,1);data.pick=s.key;data.pickDay=new Date().toDateString();save();show('workout');
 }
-function delSession(i){if(!confirm('Delete this session from the log?'))return;data.sessions.splice(i,1);save();renderProgress();toast('Deleted.')}
+function delSession(i){if(!confirm('Delete this session from the log?'))return;{const s0=data.sessions[i];if(s0&&s0.icuId)(data.icuIgnore=data.icuIgnore||[]).push(s0.icuId)}data.sessions.splice(i,1);save();renderProgress();toast('Deleted.')}
 // ---- bottom sheet: exercise detail (demo, cues, history, every swap) ----
 function sheet(html){document.getElementById('sheetBody').innerHTML=html;document.getElementById('sheet').classList.remove('hidden');document.body.style.overflow='hidden'}
 function closeSheet(){const s=document.getElementById('sheet');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');document.body.style.overflow=''}}
@@ -554,7 +558,7 @@ async function syncRuns(manual){
   const r=await fetch(`/api/runs?since=${localYmd(since)}${data.icuToken?'&t='+encodeURIComponent(data.icuToken):''}`,{cache:'no-store'});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?'Token rejected — it must match REBUILD_TOKEN in Netlify.':r.status===503?'Not set up on Netlify yet (INTERVALS_API_KEY), or the site needs a redeploy.':r.status===404?'The sync function isn’t deployed on this site.':(e.error||'Sync failed')+' ('+r.status+').')}
   const {runs=[]}=await r.json();let added=0,updated=0;
-  runs.forEach(a=>{const d=new Date(a.date);if(isNaN(d)||data.sessions.some(x=>x.icuId===a.id))return;const day=localYmd(d);
+  runs.forEach(a=>{const d=new Date(a.date);if(isNaN(d)||data.sessions.some(x=>x.icuId===a.id)||(data.icuIgnore||[]).includes(a.id))return;const day=localYmd(d);
    const key=(dow(d)>=5||a.km>=10||a.min>=70)?'long':(data.thuRun&&dow(d)===3?'run2':'run');
    const same=data.sessions.find(x=>!x.icuId&&/run|long/.test(x.key)&&localYmd(new Date(x.date))===day);
    const fields={min:String(a.min),km:String(a.km),up:a.up,hr:a.hr,pace:a.pace,load:a.load,src:'garmin',icuId:a.id,act:a.name};
@@ -630,6 +634,29 @@ function routineDone(kind){const k=view==='workout'&&woKey&&woKey!=='off'?woKey:
  if(kind==='warm'){const n=data.daily.find(x=>/mobil/i.test(x)),day=localYmd(),arr=data.dailyLog[day]||[];if(n&&!arr.includes(n)){arr.push(n);data.dailyLog[day]=arr}}
  if(k){const d=data.drafts[k]||(data.drafts[k]={t:Date.now(),sets:{},f:{}});d.t=Date.now();d[kind==='warm'?'warm':'stretch']=true}
  save();closeSheet();render();toast(kind==='warm'?'Warm-up done · Mobility ticked.':'Stretch logged for this session.')}
+// ---- cloud backup (netlify/functions/backup.mjs): automatic when switched on, at most every 2 min while the app is open, plus on load after 6 h ----
+async function cloudBackup(manual){
+ if(!data.cloud&&!manual)return;const msg=document.getElementById('cloudMsg');const say=t=>{if(msg)msg.textContent=t;if(manual)toast(t)};
+ if(!data.icuToken){say('Set the sync token first (REBUILD_TOKEN in Netlify).');return}
+ try{const r=await fetch('/api/backup?t='+encodeURIComponent(data.icuToken),{method:'PUT',headers:{'content-type':'application/json'},body:backupText()});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===503?'Cloud backup isn’t switched on in Netlify yet (REBUILD_TOKEN), or the site needs a redeploy.':r.status===401?'Token rejected — it must match REBUILD_TOKEN in Netlify.':(e.error||'Backup failed')+' ('+r.status+')')}
+  dirty=false;data.cloudLast=Date.now();data.lastBackup=Date.now();saveQuiet();say('Backed up to the cloud '+new Date().toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'})+'.');if(view==='today')render()
+ }catch(e){say(e.message)}}
+async function cloudRestore(){if(!data.icuToken){toast('Set the sync token first.');return}
+ try{const r=await fetch('/api/backup?t='+encodeURIComponent(data.icuToken),{cache:'no-store'});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===404?'No cloud backup yet.':r.status===401?'Token rejected.':e.error||('Restore failed ('+r.status+')'))}
+  const p=await r.json();if(p.app!=='REBUILD')throw new Error('Not a Rebuild backup.');
+  if(!confirm('Replace the data on this phone with the cloud copy from '+(p.savedAt?new Date(p.savedAt).toLocaleString('en-ZA'):'?')+'?'))return;
+  const keep={icuToken:data.icuToken,cloud:data.cloud,apiKey:data.apiKey};data=p.data;for(const k in D)if(data[k]===undefined)data[k]=D[k];Object.assign(data,keep);saveQuiet();location.reload()
+ }catch(e){toast(e.message)}}
+function saveToken(){data.icuToken=document.getElementById('icuToken').value.trim();save();toast(data.icuToken?'Token saved.':'Token cleared.');render()}
+// ---- the dumbbell rack: suggestions snap to weights you actually own ----
+function setDbSet(v){const out=[];for(const t of String(v||'').trim().split(/\s+/)){if(!t)continue;const m=t.match(/^(\d+(?:[.,]\d+)?)[-–](\d+(?:[.,]\d+)?)(?:[\/x×](\d+(?:[.,]\d+)?))?$/);
+ if(m){const a=+m[1].replace(',','.'),b=+m[2].replace(',','.'),st=m[3]?+m[3].replace(',','.'):2.5;if(st>0&&b>=a)for(let x=a;x<=b+1e-9;x+=st)out.push(+x.toFixed(2))}else{const n=parseFloat(t.replace(',','.'));if(!isNaN(n)&&n>0)out.push(n)}}
+ data.dbSet=[...new Set(out)].sort((a,b)=>a-b);save();render();toast(data.dbSet.length?`Rack saved: ${data.dbSet.length} weights, ${data.dbSet[0]}–${data.dbSet.at(-1)} kg.`:'Rack cleared — suggestions use fixed steps.')}
+// Next weight up for an exercise: the rack if it is a dumbbell move and a rack is set, else the exercise's own increment. null = top of the rack.
+function nextKg(e,kg){if(e.eq.includes('db')&&data.dbSet.length){const n=data.dbSet.find(x=>x>kg+0.01);return n===undefined?null:n}return +(kg+e.inc).toFixed(2)}
+// ---- new-version prompt: the service worker swapped underneath us; tap the toast to restart ----
+let pendingReload=false;
 // ---- rest timer ----
 let tEnd=0,tInt=null;
 let tTotal=0;
@@ -793,7 +820,8 @@ matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',()=>{if(da
 wireEntry();
 ['input','change'].forEach(ev=>document.getElementById('workout').addEventListener(ev,captureDraft));
 render();setInterval(elapsedTick,1000);if(data.garmin&&navigator.onLine&&Date.now()-(data.icuLast||0)>6*36e5)syncRuns();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.register('sw.js').catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had){pendingReload=true;toast('Update ready · tap here to restart')}})}
+setInterval(()=>{if(dirty&&data.cloud&&navigator.onLine)cloudBackup()},120000);if(data.cloud&&navigator.onLine&&Date.now()-(data.cloudLast||0)>6*36e5)cloudBackup();
 // Ask the browser not to evict the training log under storage pressure.
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 </script>
