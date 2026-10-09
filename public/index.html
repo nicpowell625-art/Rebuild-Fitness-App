@@ -104,7 +104,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 
 <section id="today" class="view">
   <div class="card hero"><div class="eyebrow" id="todayDate"></div><h2 id="todayTitle">—</h2><p id="todayDesc"></p>
-    <button class="primary big" id="startBtn" onclick="show('workout')">Start session</button>
+    <button class="primary big" id="startBtn" onclick="startSession()">Start session</button>
     <div class="chips" id="pickRow"></div>
   </div>
   <div class="tiles"><div class="tile"><b id="wkDone">0/5</b><span>This week</span></div><div class="tile"><b id="weekNo">1</b><span>Week of 12</span></div><div class="tile"><b id="streak">0</b><span>Streak</span></div><div class="tile"><b id="bwNow">—</b><span>kg</span></div></div>
@@ -192,7 +192,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="notice">Get urgent care for a sudden worst-ever headache, or one with weakness, confusion, vision loss, fever with stiff neck, or after a head knock.</div></div>
   <div class="card"><div class="cardhead"><h2>Data</h2></div><p class="small muted" style="margin-top:0">Your log lives only on this phone, at this web address. <span id="bkAge"></span></p><div class="links"><button class="hidden" id="shareBk" onclick="shareBackup()">Share backup</button><button onclick="exportData()">Export backup</button><button onclick="document.getElementById('dataFile').click()">Import backup</button><button onclick="if(confirm('Delete everything on this device?')){localStorage.removeItem(KEY);location.reload()}">Clear</button></div>
     <input id="dataFile" type="file" accept=".json,.txt,application/json,text/plain" class="hidden" onchange="importDataFile(event)"></div>
-  <p class="small muted" style="text-align:center">Rebuild 6.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
+  <p class="small muted" style="text-align:center">Rebuild 6.1.1 · 9 Oct 2026 · exercise images: Free Exercise DB</p>
 </section>
 </div>
 
@@ -322,6 +322,8 @@ function nextUp(){const d=doneKeys();return order().find(k=>!d.has(k))||null}
 // A manual pick only holds for the day it was made; after that the schedule takes over again.
 function currentKey(){if(data.pick&&data.pickDay===new Date().toDateString())return data.pick;const sched=WEEK[dow(new Date())].k;if(order().includes(sched)&&!doneKeys().has(sched))return sched;return nextUp()||'off'}
 function pick(k){data.pick=k;data.pickDay=new Date().toDateString();save();render()}
+// Start = the workout clock starts now (ticking a set also starts it, for sessions begun from the tab).
+function startSession(){const k=currentKey();if(k!=='off'){const d=draftFor(k)||{sets:{},f:{}};if(!d.started)d.started=Date.now();d.t=Date.now();data.drafts[k]=d;save()}show('workout')}
 function ytLink(q,label='Watch demo'){return q?`<a target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}">${label}</a>`:''}
 function streak(){let n=0;for(let w=weekNo()-1;w>=1;w--){const m=new Date(monday(data.start+'T00:00'));m.setDate(m.getDate()+7*(w-1));if(doneKeys(m).size>=3)n++;else break}return n}
 
@@ -486,14 +488,14 @@ function completeWorkout(){
  const k=woKey||currentKey();if(k==='off')return;const dr=draftFor(k),today=localYmd(),dv=document.getElementById('woDate').value||today,when=dv===today?new Date():new Date(dv+'T12:00');
  const d=SLOT[k],s={date:when.toISOString(),key:k,weekday:d,name:WEEK[d].n,week:weekNo(when),time:data.time,rpe:document.getElementById('woRpe').value,note:document.getElementById('woNote').value,feel:dr?.feel||'',travel:data.travel,sets:{},pats:{}};
  // Time from the first logged set to Finish, only when it was logged live (not back-dated, not typed in afterwards).
- if(k.length===1&&dr?.started&&!dr.keep&&dv===today){const mins=Math.round((Date.now()-dr.started)/6e4);if(mins>=10&&mins<240)s.dur=mins}
+ if(k.length===1&&dr?.started&&!dr.keep&&dv===today){const mins=Math.round((Date.now()-dr.started)/6e4);if(mins>=3&&mins<240)s.dur=mins}
  if(dr?.keep)Object.assign(s,dr.keep);
  let prs=[];
  if(k==='run'||k==='long'){s.min=document.getElementById('runMin').value;s.km=dec(document.getElementById('runKm').value)}
  else document.querySelectorAll('#exList .ex').forEach((el,i)=>{const name=el.dataset.name,e=LIB.find(x=>x.name===name),before=bestOf(name,e.load);const arr=[...el.querySelectorAll('input[type=checkbox]')].map((c,j)=>({kg:dec(document.getElementById(`w${i}s${j}`).value),reps:document.getElementById(`r${i}s${j}`).value,done:c.checked})).filter(x=>x.done);
   if(arr.length){s.sets[name]=arr;s.pats[el.dataset.pat]=arr.length;const now=Math.max(...arr.map(x=>e.load==='kg'?e1rm(+x.kg||0,+x.reps||0):(+x.reps||0)));if(before>0&&now>before)prs.push(name)}});
  if(!s.min&&!Object.keys(s.sets).length&&!confirm('No sets ticked. Log the session anyway?'))return;
- data.sessions.push(s);data.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);data.pick=null;delete data.drafts[k];save();timerStop();document.getElementById('woNote').value='';document.getElementById('woRpe').value='';show('today');toast(prs.length?`Logged. PR on: ${prs.join(', ')}.`:'Logged. Tick earned.',prs.length?'pr':'');
+ data.sessions.push(s);data.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);data.pick=null;delete data.drafts[k];save();timerStop();document.getElementById('woNote').value='';document.getElementById('woRpe').value='';show('today');toast(`Logged${s.dur?' · '+s.dur+' min':''}. ${prs.length?'PR on: '+prs.join(', ')+'.':'Tick earned.'}`,prs.length?'pr':'');
 }
 // Fix a typo after the fact: the session goes back on the Session screen as a draft and off the log until Finish.
 function reopen(i){
@@ -515,7 +517,7 @@ function openEx(i){const r=curS?.rows[i];if(!r)return;const e=r.e,k=woKey,ov=dat
  <div class="links">${ytLink(e.demo,'▶ Watch a full demo')}</div>
  ${alts.length?`<div class="eyebrow" style="margin-top:14px">Swap for</div><div class="swaplist">${alts.map(o=>`<button class="swapopt" onclick="closeSheet();swap('${k}','${r.pat}','${o.name.replace(/'/g,"\\'")}')">${thumb(o)}<span>${esc(o.name)}<br><small>${o.eq.length?o.eq.map(q=>EQUIP[q]).join(', '):'Bodyweight'}</small></span></button>`).join('')}</div>`:''}`)}
 // Minutes since the first logged set, in the sticky session bar.
-function elapsedTick(){const el=document.getElementById('woElapsed');if(!el||!woKey)return;const d=draftFor(woKey);if(woKey==='off'){el.textContent='Nothing queued';return}if(!d||!d.started){el.textContent='Not started';return}const m=Math.floor((Date.now()-d.started)/6e4);el.textContent=m<1?'Just started':`${m} min elapsed`}
+function elapsedTick(){const el=document.getElementById('woElapsed');if(!el||!woKey)return;const d=draftFor(woKey);if(woKey==='off'){el.textContent='Nothing queued';return}if(!d||!d.started){el.textContent='Not started';return}const t=Math.floor((Date.now()-d.started)/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),sec=t%60;el.textContent=(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(sec).padStart(2,'0')+' elapsed'}
 // ---- rest timer ----
 let tEnd=0,tInt=null;
 let tTotal=0;
@@ -675,7 +677,7 @@ applyTheme();
 matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',()=>{if(data.theme==='auto')applyTheme()});
 wireEntry();
 ['input','change'].forEach(ev=>document.getElementById('workout').addEventListener(ev,captureDraft));
-render();setInterval(elapsedTick,15000);
+render();setInterval(elapsedTick,1000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 // Ask the browser not to evict the training log under storage pressure.
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
