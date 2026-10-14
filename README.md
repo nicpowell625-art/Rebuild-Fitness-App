@@ -40,6 +40,7 @@ Patterns in priority order — the first ones survive a short session:
 
 - **A (lower):** squat, hinge, single-leg squat, horizontal pull, single-leg hinge, carry, calves
 - **B (upper, pull first):** horizontal pull, horizontal push, vertical pull, vertical push, rear delts, side delts, core
+- **Arm finishers (phase 2 onwards):** biceps at the end of B, triceps in C before the anti-lateral slot — three light sets each. Phase-3 C is already full at four sets, so only the biceps finisher survives there.
 - **C (full body):** lunge, step-up, horizontal push, hinge, power, core, anti-lateral core (phase 3: squat, lunge, step, hinge, push, core at 4 sets)
 
 Settings → Programme has an **optional Thursday easy run** (off by default): it appears on the week strip and in the calendar export, Garmin runs on a Thursday map to it, and it never counts toward the five-session target or the block adherence figure.
